@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SENSOR>
+	<ACCEL>
+		<MODEL id="lsm330dlc_accel">
+			<NAME value="LSM330DLC"/>
+			<VENDOR value="ST Microelectronics"/>
+			<RAW_DATA_UNIT value="1" />
+			<RESOLUTION value="12" />
+			<ORIENTATION_INT value="no" />
+		</MODEL>
+
+		<MODEL id="MPU6500">
+			<NAME value="MPU6500"/>
+			<VENDOR value="Invensense"/>
+			<RAW_DATA_UNIT value="0.244" />
+			<RESOLUTION value="16" />
+			<ORIENTATION_INT value="yes" />
+		</MODEL>
+
+		<MODEL id="MPU6515">
+			<NAME value="MPU6515" />
+			<VENDOR value="Invensense"/>
+			<RAW_DATA_UNIT value="0.061"/>
+			<RESOLUTION value="16"/>
+			<ORIENTATION_INT value="yes" />
+		</MODEL>
+
+		<MODEL id="MPU6050">
+			<NAME value="MPU6050"/>
+			<VENDOR value="Invensense"/>
+			<RAW_DATA_UNIT value="0.061"/>
+			<RESOLUTION value="16" />
+			<ORIENTATION_INT value="yes" />
+		</MODEL>
+
+		<MODEL id="MPU6051">
+			<NAME value="MPU6051" />
+			<VENDOR value="Invensense"/>
+			<RAW_DATA_UNIT value="0.061"/>
+			<RESOLUTION value="16"/>
+			<ORIENTATION_INT value="yes" />
+		</MODEL>
+
+		<MODEL id="bma222e">
+			<NAME value="BMA222E" />
+			<VENDOR value="BOSCH"/>
+			<RAW_DATA_UNIT value="15.63"/>
+			<RESOLUTION value="8"/>
+			<ORIENTATION_INT value="no" />
+		</MODEL>
+	</ACCEL>
+
+	<GYRO>
+                <MODEL id="lsm330dlc_gyro">
+                        <NAME value="LSM330DLC"/>
+                        <VENDOR value="ST Microelectronics"/>
+                        <RAW_DATA_UNIT value="17.50" />
+                        <RESOLUTION value="12" />
+                </MODEL>
+
+                <MODEL id="MPU6500">
+                        <NAME value="MPU6500"/>
+                        <VENDOR value="Invensense"/>
+                        <RAW_DATA_UNIT value="15.26" />
+                        <RESOLUTION value="16" />
+                </MODEL>
+
+		<MODEL id="MPU6515">
+			<NAME value="MPU6515"/>
+			<VENDOR value="Invensense"/>
+			<RAW_DATA_UNIT value="15.26" />
+			<RESOLUTION value="16" />
+		</MODEL>
+
+                <MODEL id="MPU6050">
+                        <NAME value="MPU6050"/>
+                        <VENDOR value="Invensense"/>
+                        <RAW_DATA_UNIT value="15.26"/>
+                        <RESOLUTION value="16" />
+                </MODEL>
+
+                <MODEL id="MPU6051">
+                        <NAME value="MPU6051" />
+                        <VENDOR value="Invensense"/>
+                        <RAW_DATA_UNIT value="15.26"/>
+                        <RESOLUTION value="16"/>
+                </MODEL>
+	</GYRO>
+
+	<PROXI>
+		<MODEL id="taos">
+			<NAME value="TMD27723" />
+			<VENDOR value="TAOS"/>
+		</MODEL>
+
+		<MODEL id="TMD3782">
+			<NAME value="TMD3782" />
+			<VENDOR value="TAOS"/>
+		</MODEL>
+
+		<MODEL id="gp2a">
+			<NAME value="GP2AP020" />
+			<VENDOR value="Sharp"/>
+		</MODEL>
+
+		<MODEL id="gp2ap002s">
+			<NAME value="GP2AP002S" />
+			<VENDOR value="Sharp"/>
+		</MODEL>
+
+                <MODEL id="cm36651">
+                        <NAME value="CM36651" />
+                        <VENDOR value="Capella"/>
+                </MODEL>
+	</PROXI>
+
+	<LIGHT>
+		<MODEL id="taos">
+			<NAME value="TMD27723" />
+			<VENDOR value="TAOS"/>
+		</MODEL>
+
+		<MODEL id="TMD3782">
+			<NAME value="TMD3782" />
+			<VENDOR value="TAOS"/>
+		</MODEL>
+
+		<MODEL id="gp2a">
+			<NAME value="GP2AP020" />
+			<VENDOR value="Sharp"/>
+		</MODEL>
+
+                <MODEL id="cm36651">
+                        <NAME value="CM36651" />
+                        <VENDOR value="Capella"/>
+                </MODEL>
+	</LIGHT>
+
+	<MAGNETIC>
+
+	</MAGNETIC>
+
+	<PEDO>
+		<MODEL id="MPU6051">
+			<NAME value="MPU6051" />
+			<VENDOR value="Invensense"/>
+		</MODEL>
+
+		<MODEL id="MPU6500">
+			<NAME value="MPU6500" />
+			<VENDOR value="Invensense"/>
+		</MODEL>
+
+                <MODEL id="MPU6515">
+                        <NAME value="MPU6515" />
+                        <VENDOR value="Invensense"/>
+                </MODEL>
+	</PEDO>
+
+	<FLAT>
+		<MODEL id="MPU6051">
+			<NAME value="MPU6051" />
+			<VENDOR value="Invensense"/>
+		</MODEL>
+
+		<MODEL id="MPU6500">
+			<NAME value="MPU6500" />
+			<VENDOR value="Invensense"/>
+		</MODEL>
+
+                <MODEL id="MPU6515">
+                        <NAME value="MPU6515" />
+                        <VENDOR value="Invensense"/>
+                </MODEL>
+	</FLAT>
+
+	<BIO>
+		<MODEL id="ADPD142">
+			<NAME value="ADPD142" />
+			<VENDOR value="ANALOG DEVICES"/>
+		</MODEL>
+	</BIO>
+
+	<BIO_HRM>
+		<MODEL id="ADPD142">
+			<NAME value="ADPD142" />
+			<VENDOR value="ANALOG DEVICES"/>
+		</MODEL>
+	</BIO_HRM>
+</SENSOR>
