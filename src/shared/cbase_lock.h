@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -28,6 +28,7 @@ enum lock_type {
 	LOCK_TYPE_WRITE,
 };
 
+#ifdef _LOCK_DEBUG
 #define AUTOLOCK(x) Autolock x##_autolock((x),LOCK_TYPE_MUTEX, #x, __MODULE__, __func__, __LINE__)
 #define AUTOLOCK_R(x) Autolock x##_autolock_r((x),LOCK_TYPE_READ, #x,  __MODULE__, __func__, __LINE__)
 #define AUTOLOCK_W(x) Autolock x##_autolock_w((x),LOCK_TYPE_WRITE, #x, __MODULE__, __func__, __LINE__)
@@ -35,6 +36,16 @@ enum lock_type {
 #define LOCK_R(x)	(x).lock(LOCK_TYPE_READ, #x, __MODULE__, __func__, __LINE__)
 #define LOCK_W(x)	(x).lock(LOCK_TYPE_WRITE, #x, __MODULE__, __func__, __LINE__)
 #define UNLOCK(x)	(x).unlock()
+#else
+#define AUTOLOCK(x) Autolock x##_autolock((x),LOCK_TYPE_MUTEX)
+#define AUTOLOCK_R(x) Autolock x##_autolock_r((x),LOCK_TYPE_READ)
+#define AUTOLOCK_W(x) Autolock x##_autolock_w((x),LOCK_TYPE_WRITE)
+#define LOCK(x)		(x).lock()
+#define LOCK_R(x)	(x).lock(LOCK_TYPE_READ)
+#define LOCK_W(x)	(x).lock(LOCK_TYPE_WRITE)
+#define UNLOCK(x)	(x).unlock()
+#endif
+
 
 class cbase_lock
 {
@@ -43,6 +54,7 @@ public:
 	virtual ~cbase_lock();
 
 	void lock(lock_type type, const char* expr, const char *module, const char *func, int line);
+	void lock(lock_type type);
 	void unlock(void);
 
 protected:
@@ -66,15 +78,9 @@ class Autolock
 private:
 	cbase_lock& m_lock;
 public:
-	Autolock(cbase_lock &m, lock_type type, const char* expr, const char *module, const char *func, int line) : m_lock(m)
-	{
-		m_lock.lock(type, expr, module, func, line);
-	}
-
-	~Autolock()
-	{
-		m_lock.unlock();
-	}
+	Autolock(cbase_lock &m, lock_type type, const char* expr, const char *module, const char *func, int line);
+	Autolock(cbase_lock &m, lock_type type);
+	~Autolock();
 };
 
 #endif

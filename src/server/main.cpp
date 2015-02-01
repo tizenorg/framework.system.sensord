@@ -1,10 +1,8 @@
 /*
- *  sensor-framework
+ * sensord
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  *
- * Contact: JuHyun Kim <jh8212.kim@samsung.com>
- * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,225 +17,75 @@
  *
  */ 
 
-#include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <dlfcn.h>
-#include <pthread.h>
-#include <string.h>
 #include <signal.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <sys/un.h>
-#include <fcntl.h>
 #include <common.h>
-#include <cobject_type.h>
-#include <cmutex.h>
-#include <clist.h>
-#include <cmodule.h>
-#include <cworker.h>
-#include <cipc_worker.h>
-#include <csock.h>
-#include <cpacket.h>
-#include <sf_common.h>
-#include <ccatalog.h>
-#include <csensor_catalog.h>
-#include <cfilter_catalog.h>
-#include <cprocessor_catalog.h>
-#include <csensor_module.h>
-#include <cfilter_module.h>
-#include <cprocessor_module.h>
-#include <cdata_stream.h>
-#include <cserver.h>
-#include <cutil.h>
-#include <resource_str.h>
+#include <server.h>
+#include <dbus_util.h>
+#include <sensor_plugin_loader.h>
+#include <fstream>
 
-#if !defined(PATH_MAX)
-#define PATH_MAX 256
-#endif
+using std::fstream;
 
-#define SF_SERVER_STATE_LOG_FILE	"/opt/share/debug/sf_server_log"
-#define SF_SERVER_STATE_LOG_DIR		"/opt/share/debug"
-
-#define SENSOR_CONF_PATH			"/usr/etc/sf_sensor.conf"
-#define FILTER_CONF_PATH			"/usr/etc/sf_filter.conf"
-#define PROCESSOR_CONF_PATH			"/usr/etc/sf_processor.conf"
-#define DATASTREAM_CONF_PATH		"/usr/etc/sf_data_stream.conf"
-
-static struct sigaction sf_act_quit;
-static struct sigaction sf_oldact_quit;
-static struct sigaction sf_act_pipe;
-static struct sigaction sf_oldact_pipe;
-
-static void sig_pipe_handler(int signo)
+static void sig_term_handler(int signo, siginfo_t *info, void *data)
 {
-	int fd;
-	char buf[255];
-	time_t now_time;
+	char proc_name[NAME_MAX];
 
-	if(signo==SIGPIPE)
-	{
-		time(&now_time);
+	get_proc_name(info->si_pid, proc_name);
 
-		if ( access (SF_SERVER_STATE_LOG_DIR, F_OK) <	0 ) {
-			if(0 != mkdir(SF_SERVER_STATE_LOG_DIR, 0755))
-				ERR("directory make fail");
-		}
-
-		fd = open(SF_SERVER_STATE_LOG_FILE,	O_WRONLY|O_CREAT|O_APPEND, 0755);
-
-		if (fd != -1) {
-			snprintf(buf,255, "\nsf_sever_sig_pipe_log now-time : %ld (s)\n\n",(long)now_time);
-			write(fd, buf, strlen(buf));
-			snprintf(buf,255, "sig_pipe event happend");
-			write(fd, buf, strlen(buf));
-		}
-		if (fd != -1) {
-			close(fd);
-		}
-	}
-
-	return;
+	ERR("Received SIGTERM(%d) from %s(%d)\n", signo, proc_name, info->si_pid);
+	exit(EXIT_SUCCESS);
 }
 
-static void sig_quit_handler(int signo)
+static void signal_init(void)
 {
-	int fd;
-	char buf[255];
-	time_t now_time;
+	struct sigaction sig_act;
+	memset(&sig_act, 0, sizeof(struct sigaction));
 
-	if( (signo==SIGTERM) || (signo==SIGQUIT) )
-	{
-		time(&now_time);
-		if ( access (SF_SERVER_STATE_LOG_DIR, F_OK) < 0 ) {
-			if(0 != mkdir(SF_SERVER_STATE_LOG_DIR, 0755))
-				ERR("directory make fail");
-		}
+	sig_act.sa_handler = SIG_IGN;
+	sigaction(SIGCHLD, &sig_act, NULL);
+	sigaction(SIGPIPE, &sig_act, NULL);
 
-		fd = open(SF_SERVER_STATE_LOG_FILE,	O_WRONLY|O_CREAT|O_APPEND, 0755);
-
-		if (fd != -1) {
-			snprintf(buf,255, "\nsf_sever_sig_quit_term_log	now-time : %ld (s)\n\n",(long)now_time);
-			write(fd, buf, strlen(buf));
-		}
-		
-		if (fd != -1) {
-			close(fd);
-		}
-
-		cserver::get_instance().sf_main_loop_stop();
-		DBG("sf_main_loop_stop() called");
-	}
-
-	return;
+	sig_act.sa_handler = NULL;
+	sig_act.sa_sigaction = sig_term_handler;
+	sig_act.sa_flags = SA_SIGINFO;
+	sigaction(SIGTERM, &sig_act, NULL);
 }
 
-static int sig_act_init(void)
+static void set_cal_data(void)
 {
-	int return_state=0;
+	const string cal_node_path = "/sys/class/sensors/ssp_sensor/set_cal_data";
+	const int SET_CAL = 1;
 
-	sf_act_quit.sa_handler=sig_quit_handler;
-	sigemptyset(&sf_act_quit.sa_mask);
-	sf_act_quit.sa_flags = SA_NOCLDSTOP;
+	fstream node(cal_node_path, fstream::out);
 
-	sf_act_pipe.sa_handler=sig_pipe_handler;
-	sigemptyset(&sf_act_pipe.sa_mask);
-	sf_act_pipe.sa_flags = SA_NOCLDSTOP;
-
-
-	if (sigaction(SIGTERM, &sf_act_quit, &sf_oldact_quit) < 0) {
-		ERR("error sigaction register for SIGTERM");
-		return_state = -1;
+	if (!node) {
+		INFO("Not support cal_node: %s", cal_node_path.c_str());
+		return;
 	}
 
-	if (sigaction(SIGQUIT, &sf_act_quit, &sf_oldact_quit) < 0) {
-		ERR("error sigaction register for SIGQUIT");
-		return_state -= 1;
-	}
+	node << SET_CAL;
 
-	if (sigaction(SIGPIPE, &sf_act_pipe, &sf_oldact_pipe) < 0) {
-		ERR("error sigaction register for SIGPIPE");
-		return_state -= 1;
-	}
+	INFO("Succeeded to set calibration data");
 
-	signal(SIGCHLD, SIG_IGN);
-	signal(SIGUSR1, SIG_IGN);
-	signal(SIGUSR2, SIG_IGN);
-
-	return return_state;
+	return;
 }
 
 int main(int argc, char *argv[])
 {
-	csensor_catalog *sensor_catalog = NULL;
-	cfilter_catalog *filter_catalog = NULL;
-	cprocessor_catalog *processor_catalog = NULL;
-	cdata_stream dstream;
-	bool catalog_status = true;
+	INFO("Sensord started");
 
-	sensor_catalog = new csensor_catalog;
-	filter_catalog = new cfilter_catalog;
-	processor_catalog = new cprocessor_catalog;
+	signal_init();
 
-	if (!sensor_catalog->create((char *)SENSOR_CONF_PATH)) {
-		ERR("sensor_catalog create fail\n");
-		catalog_status = false;
-	}
+	set_cal_data();
 
-	if (filter_catalog->create((char *)FILTER_CONF_PATH) == false) {
-		ERR("filter_catalog create fail\n");
-		catalog_status = false;;
-	}
+	sensor_plugin_loader::get_instance().load_plugins();
 
-	if (processor_catalog->create((char *)PROCESSOR_CONF_PATH) == false) {
-		ERR("processor_catalog create fail\n");
-		catalog_status = false;
-	}
+	server::get_instance().run();
 
-	if (!catalog_status) {
-		delete sensor_catalog;
-		delete filter_catalog;
-		delete processor_catalog;
-		return -1;
-	}
+	server::get_instance().stop();
 
-	if (dstream.create((char *)DATASTREAM_CONF_PATH) == false) {
-		processor_catalog->destroy();
-		delete processor_catalog;
+	sensor_plugin_loader::get_instance().destroy();
 
-		filter_catalog->destroy();
-		delete filter_catalog;
-
-		sensor_catalog->destroy();
-		delete sensor_catalog;
-
-		ERR("Failed to build a data stream, missing configurations?\n");
-		return -1;
-	}
-	
-	if (sig_act_init() != 0) {
-		ERR("sig_act_init fail!!");
-	}
-
-	cserver::get_instance().sf_main_loop();
-
-	processor_catalog->destroy();
-	delete processor_catalog;
-
-	filter_catalog->destroy();
-	delete filter_catalog;
-
-	sensor_catalog->destroy();
-	delete sensor_catalog;
-
-	INFO("sf_server terminated\n");
+	INFO("Sensord terminated");
 	return 0;
 }
-
-//! End of a file

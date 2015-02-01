@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -36,7 +36,11 @@ cmutex::~cmutex()
 
 void cmutex::lock()
 {
+#ifdef _LOCK_DEBUG
 	cbase_lock::lock(LOCK_TYPE_MUTEX, "mutex", __MODULE__, __func__, __LINE__);
+#else
+	cbase_lock::lock(LOCK_TYPE_MUTEX);
+#endif
 }
 
 void cmutex::lock(const char* expr, const char *module, const char *func, int line)

@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -18,59 +18,66 @@
  */
 
 #include <csensor_event_queue.h>
-#include "common.h">
-
-csensor_event_queue csensor_event_queue::inst;
+#include "common.h"
 
 csensor_event_queue::csensor_event_queue()
 {
 }
 
+csensor_event_queue& csensor_event_queue::get_instance()
+{
+	static csensor_event_queue inst;
+	return inst;
+}
+
+
 void csensor_event_queue::push(sensor_event_t const &event)
 {
-	sensor_event_t *new_event = new sensor_event_t;
+	sensor_event_t *new_event = new(std::nothrow) sensor_event_t;
+	retm_if(!new_event, "Failed to allocate memory");
 	*new_event = event;
 
-	sensor_event_queue_item_t item;
-	item.type = SENSOR_EVENT_ITEM;
-	item.event = new_event;
-
-	push_internal(item);
+	push_internal(new_event);
 }
 
 void csensor_event_queue::push(sensorhub_event_t const &event)
 {
-	sensorhub_event_t *new_event = new sensorhub_event_t;
+	sensorhub_event_t *new_event = new(std::nothrow) sensorhub_event_t;
+	retm_if(!new_event, "Failed to allocate memory");
 	*new_event = event;
 
-	sensor_event_queue_item_t item;
-	item.type = SENSORHUB_EVENT_ITEM;
-	item.event = new_event;
-
-	push_internal(item);
+	push_internal(new_event);
 }
 
-void csensor_event_queue::push_internal(sensor_event_queue_item_t const &item)
+void csensor_event_queue::push_internal(void *event)
 {
 	lock l(m_mutex);
 	bool wake = m_queue.empty();
 
 	if (m_queue.size() >= QUEUE_FULL_SIZE) {
-		ERR("Queue is full");
+		ERR("Queue is full, drop it!");
+
+		unsigned int event_type = *((unsigned int *)(event));
+
+		if (is_sensorhub_event(event_type))
+			delete (sensorhub_event_t *)event;
+		else
+			delete (sensor_event_t *)event;
+
 	} else
-		m_queue.push(item);
+		m_queue.push(event);
 
 	if (wake)
 		m_cond_var.notify_one();
 }
 
-sensor_event_queue_item_t csensor_event_queue::pop(void)
+void* csensor_event_queue::pop(void)
 {
 	ulock u(m_mutex);
 	while (m_queue.empty())
 		m_cond_var.wait(u);
 
-	sensor_event_queue_item_t event = m_queue.front();
+	void* event = m_queue.front();
 	m_queue.pop();
 	return event;
 }

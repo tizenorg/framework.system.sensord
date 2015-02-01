@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -20,6 +20,14 @@
 #include <cinterval_info_list.h>
 #include <algorithm>
 
+
+cinterval_info::cinterval_info(int client_id, bool is_processor, unsigned int interval)
+{
+	this->client_id = client_id;
+	this->is_processor = is_processor;
+	this->interval = interval;
+}
+
 bool cinterval_info_list::comp_interval_info(cinterval_info a, cinterval_info b)
 {
 	return a.interval < b.interval;
@@ -27,10 +35,7 @@ bool cinterval_info_list::comp_interval_info(cinterval_info a, cinterval_info b)
 
 cinterval_info_iterator cinterval_info_list::find_if(int client_id, bool is_processor)
 {
-
-	cinterval_info_iterator iter;
-
-	iter = m_list.begin();
+	auto iter = m_list.begin();
 
 	while (iter != m_list.end()) {
 		if ((iter->client_id == client_id) && (iter->is_processor == is_processor))
@@ -45,9 +50,7 @@ cinterval_info_iterator cinterval_info_list::find_if(int client_id, bool is_proc
 
 bool cinterval_info_list::add_interval(int client_id, unsigned int interval, bool is_processor)
 {
-	cinterval_info_iterator iter;
-
-	iter = find_if(client_id, is_processor);
+	auto iter = find_if(client_id, is_processor);
 
 	if (iter != m_list.end())
 		*iter = cinterval_info(client_id, is_processor, interval);
@@ -59,9 +62,7 @@ bool cinterval_info_list::add_interval(int client_id, unsigned int interval, boo
 
 bool cinterval_info_list::delete_interval(int client_id, bool is_processor)
 {
-	cinterval_info_iterator iter;
-
-	iter = find_if(client_id, is_processor);
+	auto iter = find_if(client_id, is_processor);
 
 	if (iter == m_list.end())
 		return false;
@@ -73,9 +74,7 @@ bool cinterval_info_list::delete_interval(int client_id, bool is_processor)
 
 unsigned int cinterval_info_list::get_interval(int client_id, bool is_processor)
 {
-	cinterval_info_iterator iter;
-
-	iter = find_if(client_id, is_processor);
+	auto iter = find_if(client_id, is_processor);
 
 	if (iter == m_list.end())
 		return 0;
@@ -85,12 +84,10 @@ unsigned int cinterval_info_list::get_interval(int client_id, bool is_processor)
 
 unsigned int cinterval_info_list::get_min(void)
 {
-	if (m_list.size() == 0)
+	if (m_list.empty())
 		return 0;
 
-	cinterval_info_iterator iter;
-
-	iter = min_element(m_list.begin(), m_list.end(), comp_interval_info);
+	auto iter = min_element(m_list.begin(), m_list.end(), comp_interval_info);
 
 	return iter->interval;
 }

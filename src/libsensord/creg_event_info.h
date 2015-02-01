@@ -1,5 +1,5 @@
 /*
- * libslp-sensor
+ * libsensord
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -20,20 +20,30 @@
 #ifndef CREG_EVENT_INFO_H_
 #define CREG_EVENT_INFO_H_
 
-#include <sensor.h>
+#include <sensor_internal.h>
 #include <sf_common.h>
+
+typedef enum {
+	SENSOR_EVENT_CB,
+	SENSORHUB_EVENT_CB,
+	SENSOR_LEGACY_CB,
+} event_cb_type_t;
 
 class creg_event_info {
 public:
-	unsigned int m_event_type;
-	unsigned int m_event_interval;
-	sensor_callback_func_t m_event_callback;
-	void* m_cb_data;
+	unsigned long long m_id;
+	int m_handle;
+	unsigned int type;
+	unsigned int m_interval;
+	int m_cb_type;
+	void *m_cb;
+	void *m_user_data;
 	unsigned long long m_previous_event_time;
 	bool	m_fired;
 
-	creg_event_info():m_event_type(0), m_event_interval(POLL_1HZ_MS),
-			m_event_callback(NULL), m_cb_data(NULL),
+	creg_event_info():m_id(0), m_handle(-1),
+			type(0), m_interval(POLL_1HZ_MS),
+			m_cb_type(SENSOR_EVENT_CB), m_cb(NULL), m_user_data(NULL),
 			m_previous_event_time(0), m_fired(false){}
 
 	~creg_event_info(){}

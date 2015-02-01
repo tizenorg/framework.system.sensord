@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -22,16 +22,16 @@
 
 typedef struct packet_header {
 	int cmd;
-	int size;
-	char data[0];
+	size_t size;
+	char data[];
 } packet_header;
 
 class cpacket
 {
 public:
-	cpacket(int size);
-	cpacket(void *data);
-	virtual ~cpacket();
+	cpacket();
+	explicit cpacket(size_t size);
+	~cpacket();
 
 	void set_cmd(int cmd);
 	int cmd(void);
@@ -39,21 +39,12 @@ public:
 	void *data(void);
 	void *packet(void);
 
-	int size(void);
-	int payload_size(void);
-	void set_payload_size(int size);
+	size_t size(void);
+	size_t payload_size(void);
 
-	static int header_size(void);
-
+	void set_payload_size(size_t size);
 private:
-	enum {
-		NEW	= 0x01,
-		SET	= 0x02,
-	};
-
 	packet_header *m_packet;
-
-	int m_create;
 };
 
 #endif

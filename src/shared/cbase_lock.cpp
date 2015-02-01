@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -18,10 +18,9 @@
  */
 
 #include <pthread.h>
-#include <cobject_type.h>
 #include <cbase_lock.h>
 #include <stdio.h>
-#include "common.h"
+#include <common.h>
 #include <errno.h>
 #include <sys/time.h>
 
@@ -90,6 +89,17 @@ void cbase_lock::lock(lock_type type, const char* expr, const char *module, cons
 	pthread_mutex_unlock(&m_history_mutex);
 }
 
+
+void cbase_lock::lock(lock_type type)
+{
+	if (type == LOCK_TYPE_MUTEX)
+		lock_impl();
+	else if (type == LOCK_TYPE_READ)
+		read_lock_impl();
+	else if (type == LOCK_TYPE_WRITE)
+		write_lock_impl();
+}
+
 void cbase_lock::unlock(void)
 {
 	unlock_impl();
@@ -131,4 +141,19 @@ int cbase_lock::unlock_impl(void)
 	return 0;
 }
 
+Autolock::Autolock(cbase_lock &m, lock_type type, const char* expr, const char *module, const char *func, int line)
+: m_lock(m)
+{
+	m_lock.lock(type, expr, module, func, line);
+}
 
+Autolock::Autolock(cbase_lock &m, lock_type type)
+: m_lock(m)
+{
+	m_lock.lock(type);
+}
+
+Autolock::~Autolock()
+{
+	m_lock.unlock();
+}

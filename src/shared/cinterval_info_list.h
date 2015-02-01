@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -26,17 +26,10 @@ using std::list;
 class cinterval_info
 {
 public:
-	cinterval_info(int client_id, bool is_processor, unsigned int interval)
-	{
-		this->client_id = client_id;
-		this->is_processor = is_processor;
-		this->interval = interval;
-	}
-
+	cinterval_info(int client_id, bool is_processor, unsigned int interval);
 	int client_id;
 	bool is_processor;
 	unsigned int interval;
-
 };
 
 typedef list<cinterval_info>::iterator cinterval_info_iterator;
@@ -50,9 +43,9 @@ private:
 	list<cinterval_info> m_list;
 
 public:
-	bool add_interval(int client_id, unsigned int interval, bool is_processor = false);
-	bool delete_interval(int client_id, bool is_processor = false);
-	unsigned int get_interval(int client_id, bool is_processor = false);
+	bool add_interval(int client_id, unsigned int interval, bool is_processor);
+	bool delete_interval(int client_id, bool is_processor);
+	unsigned int get_interval(int client_id, bool is_processor);
 	unsigned int get_min(void);
 };
 #endif

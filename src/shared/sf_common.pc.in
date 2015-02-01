@@ -9,5 +9,5 @@ Name: libsf_common
 Description: Commonly used code and defintions for the sensor framework.
 Version: @VERSION@
 Requires:
-Libs: -L${libdir} -lsf_common
+Libs: -L${libdir} -lsensord-share
 Cflags: -I${includedir}

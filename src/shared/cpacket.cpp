@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -20,75 +20,47 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include "common.h"
-#include <cobject_type.h>
+#include <new>
+#include <common.h>
 #include <cpacket.h>
+#include <sf_common.h>
 
-cpacket::cpacket(int size)
+cpacket::cpacket()
 {
-	char *ptr;
-
-	try {
-		ptr = new char[size + sizeof(packet_header)];
-	} catch (...) {
-		throw ENOMEM;
-	}
-
-	m_packet = (packet_header*)ptr;
-	memset(m_packet, 0, size + sizeof(packet_header));
-	m_packet->size = size;
-	m_create = NEW;
+	m_packet = NULL;
 }
 
-cpacket::cpacket(void *data)
+cpacket::cpacket(size_t size)
 {
-	m_packet = (packet_header*)data;
-	m_create = SET;
+	m_packet = NULL;
+	set_payload_size(size);
 }
 
 cpacket::~cpacket()
 {
-	if (m_create == NEW) {
-		delete[] (char*)m_packet;
-		m_packet = NULL;
-	}
-}
-
-void cpacket::set_payload_size(int size)
-{
-	if (!m_packet) {
-		ERR("error m_packet null!!");
-	} else {
-		m_packet->size = size;
-	}
+	delete[] (char*)m_packet;
 }
 
 void cpacket::set_cmd(int cmd)
 {
-	if (!m_packet) {
-		ERR("error m_packet null!!");
-	} else {
-		m_packet->cmd = cmd;
-	}
+	if (!m_packet)
+		set_payload_size(0);
+
+	m_packet->cmd = cmd;
 }
 
 int cpacket::cmd(void)
 {
-	if (!m_packet) {
-		ERR("error m_packet null!!");
-		return -1;
-	} else {
-		return m_packet->cmd;
-	}
-}
+	if (!m_packet)
+		return CMD_NONE;
 
+	return m_packet->cmd;
+}
 
 void *cpacket::data(void)
 {
-	if ( !m_packet ) {
-		ERR("error m_packet null!!");
+	if (!m_packet)
 		return NULL;
-	}
 
 	return m_packet->data;
 }
@@ -98,24 +70,35 @@ void *cpacket::packet(void)
 	return (void*)m_packet;
 }
 
-int cpacket::header_size(void)
+size_t cpacket::size(void)
 {
-	return sizeof(packet_header);
+	if (!m_packet)
+		return 0;
+
+	return m_packet->size + sizeof(packet_header);
 }
 
-int cpacket::size(void)
+size_t cpacket::payload_size(void)
 {
-	if (!m_packet) {
-		ERR("error m_packet null!!");
-		return -1;
-	} else {
-		return m_packet->size + sizeof(packet_header);
-	}
-}
+	if (!m_packet)
+		return 0;
 
-int cpacket::payload_size(void)
-{
 	return m_packet->size;
 }
 
-// End of a file
+void cpacket::set_payload_size(size_t size)
+{
+	int prev_cmd = CMD_NONE;
+
+	if (m_packet) {
+		prev_cmd = m_packet->cmd;
+		delete []m_packet;
+	}
+
+	m_packet = (packet_header*) new(std::nothrow) char[size + sizeof(packet_header)];
+	retm_if (!m_packet, "Failed to allocate memory");
+	m_packet->size = size;
+
+	if (prev_cmd != CMD_NONE)
+		m_packet->cmd = prev_cmd;
+}

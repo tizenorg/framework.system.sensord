@@ -1,5 +1,5 @@
 /*
- * libslp-sensor
+ * libsensord
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef COMMAND_CHANNEL_H_
-#define COMMAND_CHANNEL_H_
+#ifndef _COMMAND_CHANNEL_H_
+#define _COMMAND_CHANNEL_H_
 #include <sf_common.h>
-#include <sensor.h>
-#include <csock.h>
+#include <sensor_internal.h>
 #include <cpacket.h>
+#include <csocket.h>
 #include <vector>
 
 using std::vector;
@@ -35,25 +35,28 @@ public:
 	~command_channel();
 
 	bool create_channel(void);
+	void set_client_id(int client_id);
+
 	bool cmd_get_id(int &client_id);
-	bool cmd_hello(int client_id,  sensor_type sensor);
-	bool cmd_byebye(int client_id, sensor_type sensor);
-	bool cmd_start(int client_id, sensor_type sensor);
-	bool cmd_stop(int client_id, sensor_type sensor);
-	bool cmd_set_option(int client_id, sensor_type sensor, int option);
-	bool cmd_register_event(int client_id, unsigned int event_type);
-	bool cmd_register_events(int client_id, event_type_vector &event_vec);
-	bool cmd_unregister_event(int client_id, unsigned int event_type);
-	bool cmd_unregister_events(int client_id, event_type_vector &event_vec);
-	bool cmd_check_event(int client_id, unsigned int event_type);
-	bool cmd_set_interval(int client_id, sensor_type sensor, unsigned int interval);
-	bool cmd_unset_interval(int client_id, sensor_type sensor);
-	bool cmd_get_property(int client_id, sensor_type sensor, unsigned int data_id, void *property_data);
-	bool cmd_set_value(int client_id, sensor_type sensor, unsigned int property, long value);
-	bool cmd_get_struct(int client_id, unsigned int data_id, sensor_data_t* values);
-	bool cmd_send_sensorhub_data(int client_id, int data_len, const char* buffer);
+	bool cmd_get_sensor_list(void);
+	bool cmd_hello(sensor_id_t sensor);
+	bool cmd_byebye(void);
+	bool cmd_start(void);
+	bool cmd_stop(void);
+	bool cmd_set_option(int option);
+	bool cmd_register_event(unsigned int event_type);
+	bool cmd_register_events(event_type_vector &event_vec);
+	bool cmd_unregister_event(unsigned int event_type);
+	bool cmd_unregister_events(event_type_vector &event_vec);
+	bool cmd_set_interval(unsigned int interval);
+	bool cmd_unset_interval(void);
+	bool cmd_set_command(unsigned int cmd, long value);
+	bool cmd_get_data(unsigned int type, sensor_data_t* values);
+	bool cmd_send_sensorhub_data(const char* buffer, int data_len);
 private:
-	csock* m_command_sock;
+	csocket m_command_socket;
+	int m_client_id;
+	sensor_id_t m_sensor_id;
 	bool command_handler(cpacket *packet, void **return_payload);
 };
 

@@ -1,5 +1,5 @@
 /*
- * libslp-sensor
+ * libsensord
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -20,41 +20,52 @@
 #include <command_channel.h>
 #include <client_common.h>
 #include <sf_common.h>
-
+#include <sensor_info.h>
+#include <sensor_info_manager.h>
 
 command_channel::command_channel()
-: m_command_sock(NULL)
+: m_client_id(CLIENT_ID_INVALID)
+, m_sensor_id(UNKNOWN_SENSOR)
 {
 
 }
 command_channel::~command_channel()
 {
-	if (m_command_sock)
-		delete m_command_sock;
+	if (m_command_socket.is_valid())
+		m_command_socket.close();
 }
 
 bool command_channel::command_handler(cpacket *packet, void **return_payload)
 {
-	if (m_command_sock == NULL) {
-		ERR("Command socket is not initialized for client %s", get_client_name());
+	if (!m_command_socket.is_valid()) {
+		ERR("Command socket(%d) is not valid for client %s", m_command_socket.get_socket_fd(), get_client_name());
 		return false;
 	}
 
-	if (!m_command_sock->send(packet->packet(), packet->size())) {
+	if (packet->size() == 0) {
+		ERR("Packet is not valid for client %s", get_client_name());
+		return false;
+	}
+
+	if (m_command_socket.send(packet->packet(), packet->size()) <= 0) {
+		m_command_socket.close();
 		ERR("Failed to send command in client %s", get_client_name());
 		return false;
 	}
 
 	packet_header header;
 
-	if (!m_command_sock->recv(&header, sizeof(header))) {
+	if (m_command_socket.recv(&header, sizeof(header)) <= 0) {
+		m_command_socket.close();
 		ERR("Failed to receive header for reply packet in client %s", get_client_name());
 		return false;
 	}
 
-	char *buffer = new char[header.size];
+	char *buffer = new(std::nothrow) char[header.size];
+	retvm_if(!buffer, false, "Failed to allocate memory");
 
-	if (!m_command_sock->recv(buffer, header.size)) {
+	if (m_command_socket.recv(buffer, header.size) <= 0) {
+		m_command_socket.close();
 		ERR("Failed to receive reply packet in client %s", get_client_name());
 		delete[] buffer;
 		return false;
@@ -67,78 +78,124 @@ bool command_channel::command_handler(cpacket *packet, void **return_payload)
 
 bool command_channel::create_channel(void)
 {
-	if (m_command_sock) {
-		ERR("m_command_sock is alreay allocated for client %s",	get_client_name());
+	if (!m_command_socket.create(SOCK_STREAM))
+		return false;
+
+	if (!m_command_socket.connect(COMMAND_CHANNEL_PATH)) {
+		ERR("Failed to connect command channel for client %s, command socket fd[%d]", get_client_name(), m_command_socket.get_socket_fd());
 		return false;
 	}
 
-	m_command_sock = new csock((char *)COMMAND_CHANNEL_PATH, 0, false);
-
-	if (m_command_sock->connect_to_server() == false) {
-		ERR("Failed to connect to server for client %s", get_client_name());
-		delete m_command_sock;
-		m_command_sock= NULL;
-		return false;
-	}
+	m_command_socket.set_connection_mode();
 
 	return true;
 }
 
+void command_channel::set_client_id(int client_id)
+{
+	m_client_id = client_id;
+}
 
 bool command_channel::cmd_get_id(int &client_id)
 {
 	cpacket *packet;
 	cmd_get_id_t *cmd_get_id;
-	cmd_done_t *cmd_done;
+	cmd_get_id_done_t *cmd_get_id_done;
 
-	packet = new cpacket(sizeof(cmd_get_id_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_get_id_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
 	packet->set_cmd(CMD_GET_ID);
-	packet->set_payload_size(sizeof(cmd_get_id_t));
 
 	cmd_get_id = (cmd_get_id_t *)packet->data();
 	cmd_get_id->pid = getpid();
 
 	INFO("%s send cmd_get_id()", get_client_name());
 
-	if (!command_handler(packet, (void **)&cmd_done)) {
+	if (!command_handler(packet, (void **)&cmd_get_id_done)) {
 		ERR("Client %s failed to send/receive command", get_client_name());
 		delete packet;
 		return false;
 	}
 
-	if (cmd_done->value < 0) {
-		ERR("client %s got error[%d] from server", get_client_name(), cmd_done->value);
-		delete[] (char *)cmd_done;
+	if (cmd_get_id_done->client_id < 0) {
+		ERR("Client %s failed to get client_id[%d] from server",
+			get_client_name(), cmd_get_id_done->client_id);
+		delete[] (char *)cmd_get_id_done;
 		delete packet;
 		return false;
 	}
 
-	client_id = cmd_done->client_id;
+	client_id = cmd_get_id_done->client_id;
 
-	delete[] (char *)cmd_done;
+	delete[] (char *)cmd_get_id_done;
 	delete packet;
 
 	return true;
 }
 
-bool command_channel::cmd_hello(int client_id,  sensor_type sensor)
+bool command_channel::cmd_get_sensor_list(void)
+{
+	cpacket packet;
+	cmd_get_sensor_list_done_t *cmd_get_sensor_list_done;
+
+	packet.set_payload_size(sizeof(cmd_get_sensor_list_t));
+	packet.set_cmd(CMD_GET_SENSOR_LIST);
+
+	INFO("%s send cmd_get_sensor_list", get_client_name());
+
+	if (!command_handler(&packet, (void **)&cmd_get_sensor_list_done)) {
+		ERR("Client %s failed to send/receive command", get_client_name());
+		return false;
+	}
+
+	int sensor_cnt;
+	const size_t *size_field;
+	const char *raw_data_field;
+
+	sensor_cnt = cmd_get_sensor_list_done->sensor_cnt;
+	size_field = (const size_t *)cmd_get_sensor_list_done->data;
+	raw_data_field = (const char *)size_field + (sizeof(size_t) * sensor_cnt);
+
+	sensor_info *info;
+
+	int idx = 0;
+	for (int i = 0; i < sensor_cnt; ++i) {
+		info = new(std::nothrow) sensor_info;
+
+		if (!info) {
+			ERR("Failed to allocate memory");
+			delete[] (char *)cmd_get_sensor_list_done;
+			return false;
+		}
+
+		info->set_raw_data(raw_data_field + idx, size_field[i]);
+		sensor_info_manager::get_instance().add_info(info);
+		idx += size_field[i];
+	}
+
+	delete[] (char *)cmd_get_sensor_list_done;
+	return true;
+}
+
+
+bool command_channel::cmd_hello(sensor_id_t sensor)
 {
 	cpacket *packet;
 	cmd_hello_t *cmd_hello;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_hello_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_hello_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
 	packet->set_cmd(CMD_HELLO);
-	packet->set_payload_size(sizeof(cmd_hello_t));
 
 	cmd_hello = (cmd_hello_t*)packet->data();
-	cmd_hello->client_id = client_id;
+	cmd_hello->client_id = m_client_id;
 	cmd_hello->sensor = sensor;
 
 	INFO("%s send cmd_hello(client_id=%d, %s)",
-		get_client_name(), client_id, get_sensor_name(sensor));
+		get_client_name(), m_client_id, get_sensor_name(sensor));
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
 		ERR("Client %s failed to send/receive command for sensor[%s]",
@@ -159,37 +216,34 @@ bool command_channel::cmd_hello(int client_id,  sensor_type sensor)
 	delete[] (char *)cmd_done;
 	delete packet;
 
+	m_sensor_id = sensor;
+
 	return true;
 }
 
-bool command_channel::cmd_byebye(int client_id, sensor_type sensor)
+bool command_channel::cmd_byebye(void)
 {
 	cpacket *packet;
-	cmd_byebye_t *cmd_byebye;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_byebye_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_byebye_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
 	packet->set_cmd(CMD_BYEBYE);
-	packet->set_payload_size(sizeof(cmd_byebye_t));
-
-	cmd_byebye = (cmd_byebye_t*)packet->data();
-	cmd_byebye->client_id = client_id;
-	cmd_byebye->sensor = sensor;
 
 	INFO("%s send cmd_byebye(client_id=%d, %s)",
-		get_client_name(), client_id, get_sensor_name(sensor));
+		get_client_name(), m_client_id, get_sensor_name(m_sensor_id));
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
 		ERR("Client %s failed to send/receive command for sensor[%s] with client_id [%d]",
-			get_client_name(), get_sensor_name(sensor), client_id);
+			get_client_name(), get_sensor_name(m_sensor_id), m_client_id);
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
 		ERR("Client %s got error[%d] from server for sensor[%s] with client_id [%d]",
-			get_client_name(), cmd_done->value, get_sensor_name(sensor), client_id);
+			get_client_name(), cmd_done->value, get_sensor_name(m_sensor_id), m_client_id);
 
 		delete[] (char *)cmd_done;
 		delete packet;
@@ -199,42 +253,39 @@ bool command_channel::cmd_byebye(int client_id, sensor_type sensor)
 	delete[] (char *)cmd_done;
 	delete packet;
 
-	if (m_command_sock) {
-		delete m_command_sock;
-		m_command_sock = NULL;
-	}
+	if (m_command_socket.is_valid())
+		m_command_socket.close();
+
+
+	m_client_id = CLIENT_ID_INVALID;
+	m_sensor_id = UNKNOWN_SENSOR;
 
 	return true;
 }
 
-bool command_channel::cmd_start(int client_id, sensor_type sensor)
+bool command_channel::cmd_start(void)
 {
 	cpacket *packet;
-	cmd_start_t *cmd_start;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_start_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_start_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
 	packet->set_cmd(CMD_START);
-	packet->set_payload_size(sizeof(cmd_start_t));
-
-	cmd_start = (cmd_start_t*)packet->data();
-	cmd_start->client_id = client_id;
-	cmd_start->sensor = sensor;
 
 	INFO("%s send cmd_start(client_id=%d, %s)",
-		get_client_name(), client_id, get_sensor_name(sensor));
+		get_client_name(), m_client_id, get_sensor_name(m_sensor_id));
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
 		ERR("Client %s failed to send/receive command for sensor[%s] with client_id [%d]",
-			get_client_name(), get_sensor_name(sensor), client_id);
+			get_client_name(), get_sensor_name(m_sensor_id), m_client_id);
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
 		ERR("Client %s got error[%d] from server for sensor[%s] with client_id [%d]",
-			get_client_name(), cmd_done->value, get_sensor_name(sensor), client_id);
+			get_client_name(), cmd_done->value, get_sensor_name(m_sensor_id), m_client_id);
 
 		delete[] (char *)cmd_done;
 		delete packet;
@@ -247,33 +298,29 @@ bool command_channel::cmd_start(int client_id, sensor_type sensor)
 	return true;
 }
 
-bool command_channel::cmd_stop(int client_id, sensor_type sensor)
+bool command_channel::cmd_stop(void)
 {
 	cpacket *packet;
-	cmd_stop_t *cmd_stop;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_stop_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_stop_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
 	packet->set_cmd(CMD_STOP);
-	packet->set_payload_size(sizeof(cmd_stop_t));
-
-	cmd_stop = (cmd_stop_t*)packet->data();
-	cmd_stop->client_id = client_id;
 
 	INFO("%s send cmd_stop(client_id=%d, %s)",
-		get_client_name(), client_id, get_sensor_name(sensor));
+		get_client_name(), m_client_id, get_sensor_name(m_sensor_id));
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
 		ERR("Client %s failed to send/receive command for sensor[%s] with client_id [%d]",
-			get_client_name(), get_sensor_name(sensor), client_id);
+			get_client_name(), get_sensor_name(m_sensor_id), m_client_id);
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
 		ERR("Client %s got error[%d] from server for sensor[%s] with client_id [%d]",
-			get_client_name(), cmd_done->value, get_sensor_name(sensor), client_id);
+			get_client_name(), cmd_done->value, get_sensor_name(m_sensor_id), m_client_id);
 
 		delete[] (char *)cmd_done;
 		delete packet;
@@ -286,35 +333,33 @@ bool command_channel::cmd_stop(int client_id, sensor_type sensor)
 	return true;
 }
 
-bool command_channel::cmd_set_option(int client_id, sensor_type sensor, int option)
+bool command_channel::cmd_set_option(int option)
 {
 	cpacket *packet;
 	cmd_set_option_t *cmd_set_option;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_set_option_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_set_option_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
 	packet->set_cmd(CMD_SET_OPTION);
-	packet->set_payload_size(sizeof(cmd_set_option_t));
 
 	cmd_set_option = (cmd_set_option_t*)packet->data();
 	cmd_set_option->option = option;
-	cmd_set_option->client_id = client_id;
-	cmd_set_option->sensor = sensor;
 
 	INFO("%s send cmd_set_option(client_id=%d, %s, option=%d)",
-		get_client_name(), client_id, get_sensor_name(sensor), option);
+		get_client_name(), m_client_id, get_sensor_name(m_sensor_id), option);
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
-		ERR("Client %s failed to send/receive command for sensor[%s] with client_id [%d], option[%]",
-			get_client_name(), get_sensor_name(sensor), client_id, option);
+		ERR("Client %s failed to send/receive command for sensor[%s] with client_id [%d], option[%d]",
+			get_client_name(), get_sensor_name(m_sensor_id), m_client_id, option);
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
-		ERR("Client %s got error[%d] from server for sensor[%s] with client_id [%d], option[%]",
-			get_client_name(), cmd_done->value, get_sensor_name(sensor), client_id, option);
+		ERR("Client %s got error[%d] from server for sensor[%s] with client_id [%d], option[%d]",
+			get_client_name(), cmd_done->value, get_sensor_name(m_sensor_id), m_client_id, option);
 
 		delete[] (char *)cmd_done;
 		delete packet;
@@ -327,34 +372,33 @@ bool command_channel::cmd_set_option(int client_id, sensor_type sensor, int opti
 	return true;
 }
 
-bool command_channel::cmd_register_event(int client_id, unsigned int event_type)
+bool command_channel::cmd_register_event(unsigned int event_type)
 {
 	cpacket *packet;
 	cmd_reg_t *cmd_reg;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_reg_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_reg_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
 	packet->set_cmd(CMD_REG);
-	packet->set_payload_size(sizeof(cmd_reg_t));
 
 	cmd_reg = (cmd_reg_t*)packet->data();
-	cmd_reg->client_id = client_id;
 	cmd_reg->event_type = event_type;
 
 	INFO("%s send cmd_register_event(client_id=%d, %s)",
-		get_client_name(), client_id, get_event_name(event_type));
+		get_client_name(), m_client_id, get_event_name(event_type));
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
 		ERR("Client %s failed to send/receive command with client_id [%d], event_type[%s]",
-			get_client_name(), client_id, get_event_name(event_type));
+			get_client_name(), m_client_id, get_event_name(event_type));
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
 		ERR("Client %s got error[%d] from server with client_id [%d], event_type[%s]",
-			get_client_name(), cmd_done->value, client_id, get_event_name(event_type));
+			get_client_name(), cmd_done->value, m_client_id, get_event_name(event_type));
 
 		delete[] (char *)cmd_done;
 		delete packet;
@@ -368,14 +412,12 @@ bool command_channel::cmd_register_event(int client_id, unsigned int event_type)
 }
 
 
-bool command_channel::cmd_register_events(int client_id, event_type_vector &event_vec)
+bool command_channel::cmd_register_events(event_type_vector &event_vec)
 {
-	event_type_vector::iterator it_event;
-
-	it_event = event_vec.begin();
+	auto it_event = event_vec.begin();
 
 	while (it_event != event_vec.end()) {
-		if(!cmd_register_event(client_id, *it_event))
+		if(!cmd_register_event(*it_event))
 			return false;
 
 		++it_event;
@@ -384,34 +426,33 @@ bool command_channel::cmd_register_events(int client_id, event_type_vector &even
 	return true;
 }
 
-bool command_channel::cmd_unregister_event(int client_id, unsigned int event_type)
+bool command_channel::cmd_unregister_event(unsigned int event_type)
 {
 	cpacket *packet;
 	cmd_unreg_t *cmd_unreg;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_unreg_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_unreg_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
 	packet->set_cmd(CMD_UNREG);
-	packet->set_payload_size(sizeof(cmd_unreg_t));
 
 	cmd_unreg = (cmd_unreg_t*)packet->data();
-	cmd_unreg->client_id = client_id;
 	cmd_unreg->event_type = event_type;
 
 	INFO("%s send cmd_unregister_event(client_id=%d, %s)",
-		get_client_name(), client_id, get_event_name(event_type));
+		get_client_name(), m_client_id, get_event_name(event_type));
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
 		ERR("Client %s failed to send/receive command with client_id [%d], event_type[%s]",
-			get_client_name(), client_id, get_event_name(event_type));
+			get_client_name(), m_client_id, get_event_name(event_type));
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
 		ERR("Client %s got error[%d] from server with client_id [%d], event_type[%s]",
-			get_client_name(), cmd_done->value, client_id, get_event_name(event_type));
+			get_client_name(), cmd_done->value, m_client_id, get_event_name(event_type));
 
 		delete[] (char *)cmd_done;
 		delete packet;
@@ -425,14 +466,12 @@ bool command_channel::cmd_unregister_event(int client_id, unsigned int event_typ
 }
 
 
-bool command_channel::cmd_unregister_events(int client_id, event_type_vector &event_vec)
+bool command_channel::cmd_unregister_events(event_type_vector &event_vec)
 {
-	event_type_vector::iterator it_event;
-
-	it_event = event_vec.begin();
+	auto it_event = event_vec.begin();
 
 	while (it_event != event_vec.end()) {
-		if(!cmd_unregister_event(client_id, *it_event))
+		if(!cmd_unregister_event(*it_event))
 			return false;
 
 		++it_event;
@@ -441,73 +480,33 @@ bool command_channel::cmd_unregister_events(int client_id, event_type_vector &ev
 	return true;
 }
 
-
-bool command_channel::cmd_check_event(int client_id, unsigned int event_type)
-{
-	cpacket *packet;
-	cmd_check_event_t *cmd_check_event;
-	cmd_done_t *cmd_done;
-
-	packet = new cpacket(sizeof(cmd_check_event_t));
-
-	packet->set_cmd(CMD_CHECK_EVENT);
-	packet->set_payload_size(sizeof(cmd_check_event_t));
-
-	cmd_check_event = (cmd_check_event_t*)packet->data();
-	cmd_check_event->client_id = client_id;
-	cmd_check_event->event_type = event_type;
-
-	INFO("%s send cmd_check_event(client_id=%d, %s)",
-		get_client_name(), client_id, get_event_name(event_type));
-
-	if (!command_handler(packet, (void **)&cmd_done)) {
-		ERR("Client %s failed to send/receive command with client_id [%d], event_type[%s]",
-			get_client_name(), client_id, get_event_name(event_type));
-		delete packet;
-		return false;
-	}
-
-	if (cmd_done->value < 0) {
-		delete[] (char *)cmd_done;
-		delete packet;
-		return false;
-	}
-
-	delete[] (char *)cmd_done;
-	delete packet;
-
-	return true;
-}
-
-bool command_channel::cmd_set_interval(int client_id, sensor_type sensor, unsigned int interval)
+bool command_channel::cmd_set_interval(unsigned int interval)
 {
 	cpacket *packet;
 	cmd_set_interval_t *cmd_set_interval;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_set_interval_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_set_interval_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
 	packet->set_cmd(CMD_SET_INTERVAL);
-	packet->set_payload_size(sizeof(cmd_set_interval_t));
 
 	cmd_set_interval = (cmd_set_interval_t*)packet->data();
-	cmd_set_interval->client_id = client_id;
 	cmd_set_interval->interval = interval;
-	cmd_set_interval->sensor = sensor;
 
 	INFO("%s send cmd_set_interval(client_id=%d, %s, interval=%d)",
-		get_client_name(), client_id, get_sensor_name(sensor), interval);
+		get_client_name(), m_client_id, get_sensor_name(m_sensor_id), interval);
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
 		ERR("%s failed to send/receive command for sensor[%s] with client_id [%d], interval[%d]",
-			get_client_name(), get_sensor_name(sensor), client_id, interval);
+			get_client_name(), get_sensor_name(m_sensor_id), m_client_id, interval);
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
 		ERR("%s got error[%d] from server for sensor[%s] with client_id [%d], interval[%d]",
-			get_client_name(), cmd_done->value, get_sensor_name(sensor), client_id, interval);
+			get_client_name(), cmd_done->value, get_sensor_name(m_sensor_id), m_client_id, interval);
 
 		delete[] (char *)cmd_done;
 		delete packet;
@@ -520,34 +519,29 @@ bool command_channel::cmd_set_interval(int client_id, sensor_type sensor, unsign
 	return true;
 }
 
-bool command_channel::cmd_unset_interval(int client_id, sensor_type sensor)
+bool command_channel::cmd_unset_interval(void)
 {
 	cpacket *packet;
-	cmd_unset_interval_t *cmd_unset_interval;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_unset_interval_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_unset_interval_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
 	packet->set_cmd(CMD_UNSET_INTERVAL);
-	packet->set_payload_size(sizeof(cmd_unset_interval_t));
-
-	cmd_unset_interval = (cmd_unset_interval_t*)packet->data();
-	cmd_unset_interval->client_id = client_id;
-	cmd_unset_interval->sensor = sensor;
 
 	INFO("%s send cmd_unset_interval(client_id=%d, %s)",
-		get_client_name(), client_id, get_sensor_name(sensor));
+		get_client_name(), m_client_id, get_sensor_name(m_sensor_id));
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
 		ERR("Client %s failed to send/receive command for sensor[%s] with client_id [%d]",
-			get_client_name(), get_sensor_name(sensor), client_id);
+			get_client_name(), get_sensor_name(m_sensor_id), m_client_id);
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
 		ERR("Client %s got error[%d] from server for sensor[%s] with client_id [%d]",
-			get_client_name(), cmd_done->value, get_sensor_name(sensor), client_id);
+			get_client_name(), cmd_done->value, get_sensor_name(m_sensor_id), m_client_id);
 
 		delete[] (char *)cmd_done;
 		delete packet;
@@ -560,104 +554,35 @@ bool command_channel::cmd_unset_interval(int client_id, sensor_type sensor)
 	return true;
 }
 
-static bool is_sensor_property(unsigned int data_id)
-{
-	return ((data_id & 0xFFFF) == 1);
-}
-
-bool command_channel::cmd_get_property(int client_id, sensor_type sensor, unsigned int data_id, void *property_data)
+bool command_channel::cmd_set_command(unsigned int cmd, long value)
 {
 	cpacket *packet;
-	cmd_get_property_t *cmd_get_property;
-	cmd_return_property_t *cmd_return_property;
-
-	packet = new cpacket(sizeof(cmd_get_property_t));
-
-	packet->set_cmd(CMD_GET_PROPERTY);
-	packet->set_payload_size(sizeof(cmd_get_property_t));
-
-	cmd_get_property = (cmd_get_property_t*)packet->data();
-	cmd_get_property->client_id = client_id;
-	cmd_get_property->property_level = data_id;
-
-	INFO("%s send cmd_get_property(client_id=%d, %s, %s)",
-		get_client_name(), client_id, get_sensor_name(sensor), get_data_name(data_id));
-
-	if (!command_handler(packet, (void **)&cmd_return_property)) {
-		ERR("Client %s failed to send/receive command for sensor[%s] with client_id [%d], data_id[%s]",
-			get_client_name(), get_sensor_name(sensor), client_id, get_data_name(data_id));
-		delete packet;
-		return false;
-	}
-
-	if (cmd_return_property->state < 0) {
-		ERR("Client %s got error[%d] from server for sensor[%s] with client_id [%d], data_id[%s]",
-			get_client_name(), cmd_return_property->state, get_sensor_name(sensor), client_id, get_data_name(data_id));
-
-
-		delete[] (char *)cmd_return_property;
-		delete packet;
-		return false;
-	}
-
-	base_property_struct *base_property;
-	base_property = &cmd_return_property->base_property;
-
-	if (is_sensor_property(data_id)) {
-		sensor_properties_t *sensor_property;
-		sensor_property = (sensor_properties_t *)property_data;
-		sensor_property->sensor_unit_idx = base_property->sensor_unit_idx;
-		sensor_property->sensor_min_range = base_property->sensor_min_range;
-		sensor_property->sensor_max_range = base_property->sensor_max_range;
-		sensor_property->sensor_resolution = base_property->sensor_resolution;
-		strncpy(sensor_property->sensor_name, base_property->sensor_name, strlen(base_property->sensor_name));
-		strncpy(sensor_property->sensor_vendor, base_property->sensor_vendor, strlen(base_property->sensor_vendor));
-	} else {
-		sensor_data_properties_t *data_property;
-		data_property = (sensor_data_properties_t *)property_data;
-		data_property->sensor_unit_idx = base_property->sensor_unit_idx ;
-		data_property->sensor_min_range= base_property->sensor_min_range;
-		data_property->sensor_max_range= base_property->sensor_max_range;
-		data_property->sensor_resolution = base_property->sensor_resolution;
-	}
-
-	delete[] (char *)cmd_return_property;
-	delete packet;
-
-	return true;
-}
-
-bool command_channel::cmd_set_value(int client_id, sensor_type sensor, unsigned int property, long value)
-{
-	cpacket *packet;
-	cmd_set_value_t *cmd_set_value;
+	cmd_set_command_t *cmd_set_command;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_set_value_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_set_command_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
-	packet->set_cmd(CMD_SET_VALUE);
-	packet->set_payload_size(sizeof(cmd_set_value_t));
+	packet->set_cmd(CMD_SET_COMMAND);
 
-	cmd_set_value = (cmd_set_value_t*)packet->data();
-	cmd_set_value->client_id = client_id;
-	cmd_set_value->sensor = sensor;
-	cmd_set_value->property = property;
-	cmd_set_value->value = value;
+	cmd_set_command = (cmd_set_command_t*)packet->data();
+	cmd_set_command->cmd = cmd;
+	cmd_set_command->value = value;
 
 
-	INFO("%s send cmd_set_value(client_id=%d, %s, 0x%x, %ld)",
-		get_client_name(), client_id, get_sensor_name(sensor), property, value);
+	INFO("%s send cmd_set_command(client_id=%d, %s, 0x%x, %ld)",
+		get_client_name(), m_client_id, get_sensor_name(m_sensor_id), cmd, value);
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
 		ERR("Client %s failed to send/receive command for sensor[%s] with client_id [%d], property[0x%x], value[%d]",
-			get_client_name(), get_sensor_name(sensor), client_id, property, value);
+			get_client_name(), get_sensor_name(m_sensor_id), m_client_id, cmd, value);
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
 		ERR("Client %s got error[%d] from server for sensor[%s] with property[0x%x], value[%d]",
-			get_client_name(), cmd_done->value, get_sensor_name(sensor), property, value);
+			get_client_name(), cmd_done->value, get_sensor_name(m_sensor_id), cmd, value);
 
 		delete[] (char *)cmd_done;
 		delete packet;
@@ -670,85 +595,83 @@ bool command_channel::cmd_set_value(int client_id, sensor_type sensor, unsigned 
 	return true;
 }
 
-bool command_channel::cmd_get_struct(int client_id, unsigned int data_id, sensor_data_t* sensor_data)
+bool command_channel::cmd_get_data(unsigned int type, sensor_data_t* sensor_data)
 {
 	cpacket *packet;
 	cmd_get_data_t *cmd_get_data;
-	cmd_get_struct_t *cmd_get_struct;
+	cmd_get_data_done_t *cmd_get_data_done;
 
-	packet = new cpacket(sizeof(cmd_get_struct_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_get_data_done_t));
+	retvm_if(!packet, false, "Failed to allocate memory");
 
-	packet->set_cmd(CMD_GET_STRUCT);
-	packet->set_payload_size(sizeof(cmd_get_data_t));
+	packet->set_cmd(CMD_GET_DATA);
 
 	cmd_get_data = (cmd_get_data_t*)packet->data();
-	cmd_get_data->client_id = client_id;
-	cmd_get_data->data_id = data_id;
+	cmd_get_data->type = type;
 
-	if (!command_handler(packet, (void **)&cmd_get_struct)) {
+	if (!command_handler(packet, (void **)&cmd_get_data_done)) {
 		ERR("Client %s failed to send/receive command with client_id [%d], data_id[%s]",
-			get_client_name(), client_id, get_data_name(data_id));
+			get_client_name(), m_client_id, get_data_name(type));
 		delete packet;
 		return false;
 	}
 
-	if (cmd_get_struct->state < 0 ) {
+	if (cmd_get_data_done->state < 0 ) {
 		ERR("Client %s got error[%d] from server with client_id [%d], data_id[%s]",
-			get_client_name(), cmd_get_struct->state, client_id, get_data_name(data_id));
-		sensor_data->data_accuracy = SENSOR_ACCURACY_UNDEFINED;
-		sensor_data->data_unit_idx = SENSOR_UNDEFINED_UNIT;
-		sensor_data->time_stamp = 0;
-		sensor_data->values_num = 0;
-		delete[] (char *)cmd_get_struct;
+			get_client_name(), cmd_get_data_done->state, m_client_id, get_data_name(type));
+		sensor_data->accuracy = SENSOR_ACCURACY_UNDEFINED;
+		sensor_data->timestamp = 0;
+		sensor_data->value_count = 0;
+		delete[] (char *)cmd_get_data_done;
 		delete packet;
 		return false;
 	}
 
-	base_data_struct *base_data;
-	base_data = &cmd_get_struct->base_data;
+	sensor_data_t *base_data;
+	base_data = &cmd_get_data_done->base_data;
 
-	sensor_data->time_stamp = base_data->time_stamp;
-	sensor_data->data_accuracy = base_data->data_accuracy;
-	sensor_data->data_unit_idx = base_data->data_unit_idx;
-	sensor_data->values_num = base_data->values_num;
+	sensor_data->timestamp = base_data->timestamp;
+	sensor_data->accuracy = base_data->accuracy;
+	sensor_data->value_count = base_data->value_count;
 
 	memcpy(sensor_data->values, base_data->values,
-		sizeof(sensor_data->values[0]) * base_data->values_num);
+		sizeof(sensor_data->values[0]) * base_data->value_count);
 
-	delete[] (char *)cmd_get_struct;
+	delete[] (char *)cmd_get_data_done;
 	delete packet;
 
 	return true;
 }
 
-bool command_channel::cmd_send_sensorhub_data(int client_id, int data_len, const char* buffer)
+bool command_channel::cmd_send_sensorhub_data(const char* buffer, int data_len)
 {
 	cpacket *packet;
 	cmd_send_sensorhub_data_t *cmd_send_sensorhub_data;
 	cmd_done_t *cmd_done;
 
-	packet = new cpacket(sizeof(cmd_send_sensorhub_data_t) + data_len);
+	packet = new(std::nothrow) cpacket(sizeof(cmd_send_sensorhub_data_t) + data_len);
+	retvm_if(!packet, false, "Failed to allocate memory");
+
 	packet->set_cmd(CMD_SEND_SENSORHUB_DATA);
 
 	cmd_send_sensorhub_data = (cmd_send_sensorhub_data_t*)packet->data();
-	cmd_send_sensorhub_data->client_id = client_id;
 	cmd_send_sensorhub_data->data_len = data_len;
 	memcpy(cmd_send_sensorhub_data->data, buffer, data_len);
 
 
 	INFO("%s send cmd_send_sensorhub_data(client_id=%d, data_len = %d, buffer = 0x%x)",
-		get_client_name(), client_id, data_len, buffer);
+		get_client_name(), m_client_id, data_len, buffer);
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
 		ERR("%s failed to send/receive command with client_id [%d]",
-			get_client_name(), client_id);
+			get_client_name(), m_client_id);
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
 		ERR("%s got error[%d] from server with client_id [%d]",
-			get_client_name(), cmd_done->value, client_id);
+			get_client_name(), cmd_done->value, m_client_id);
 
 		delete[] (char *)cmd_done;
 		delete packet;

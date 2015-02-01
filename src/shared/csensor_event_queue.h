@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -30,35 +30,28 @@ using std::lock_guard;
 using std::unique_lock;
 using std::condition_variable;
 
-typedef struct sensor_event_queue_item_t {
-	sensor_event_item_type type;
-	void *event;
-}sensor_event_queue_item_t;
-
 class csensor_event_queue
 {
 private:
 	static const unsigned int QUEUE_FULL_SIZE = 1000;
 
-	queue<sensor_event_queue_item_t> m_queue;
+	queue<void* > m_queue;
 	mutex m_mutex;
 	condition_variable m_cond_var;
 
 	typedef lock_guard<mutex> lock;
 	typedef unique_lock<mutex> ulock;
 
-	static csensor_event_queue inst;
-
 	csensor_event_queue();
 	csensor_event_queue(csensor_event_queue const&) {};
 	csensor_event_queue& operator=(csensor_event_queue const&);
-	void push_internal(sensor_event_queue_item_t const &item);
+	void push_internal(void *event);
 
 public:
-	static csensor_event_queue& get_instance() {return inst; }
+	static csensor_event_queue& get_instance();
 	void push(sensor_event_t const &event);
 	void push(sensorhub_event_t const &event);
-	sensor_event_queue_item_t pop(void);
+	void* pop(void);
 };
 
 #endif

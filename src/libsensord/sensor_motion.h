@@ -1,7 +1,7 @@
 /*
- * libslp-sensor
+ * libsensord
  *
- * Copyright (c) 2013 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ extern "C"
 {
 #endif
 
-enum motion_evet_type {		
+enum motion_event_type {
 	MOTION_ENGINE_EVENT_SNAP				= (MOTION_SENSOR << 16) | 0x0001,
 	MOTION_ENGINE_EVENT_SHAKE				= (MOTION_SENSOR << 16) | 0x0002,
 	MOTION_ENGINE_EVENT_DOUBLETAP			= (MOTION_SENSOR << 16) | 0x0004,
@@ -41,6 +41,8 @@ enum motion_evet_type {
 	MOTION_ENGINE_EVENT_TILT				= (MOTION_SENSOR << 16) | 0x0200,
 	MOTION_ENGINE_EVENT_PANNING_BROWSE		= (MOTION_SENSOR << 16) | 0x0400,
 	MOTION_ENGINE_EVENT_NO_MOVE				= (MOTION_SENSOR << 16) | 0x0800,
+	MOTION_ENGINE_EVENT_SHAKE_ALWAYS_ON     = (MOTION_SENSOR << 16) | 0x1000,
+	MOTION_ENGINE_EVENT_SMART_RELAY         = (MOTION_SENSOR << 16) | 0x2000,
 };
 
 enum motion_snap_event {
@@ -95,6 +97,11 @@ enum motion_top_to_bottom_event {
 enum motion_direct_call_event_t {
 	MOTION_ENGINE_DIRECT_CALL_NONE,
 	MOTION_ENGINE_DIRECT_CALL_DETECTION,
+};
+
+enum motion_smart_relay_event_t {
+	MOTION_ENGINE_SMART_RELAY_NONE,
+	MOTION_ENGINE_SMART_RELAY_DETECTION,
 };
 
 enum motion_tilt_to_unlock_event_t {

@@ -3,6 +3,7 @@
 		<domain name="sensord" />
 		<provide>
 			<label name="sensord::server" />
+			<label name="sensord::bio" />
 		</provide>
 	</define>
 	<request>

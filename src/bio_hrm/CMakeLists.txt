@@ -7,8 +7,9 @@ SET(LIBDIR "\${prefix}/lib")
 SET(INCLUDEDIR "\${prefix}/include")
 SET(VERSION 1.0)
 
-SET(PROCESSOR_NAME bio_hrm_processor)
-SET(SENSOR_NAME bio_hrm_sensor)
+SET(SENSOR_PHY_NAME bio_hrm_phy_sensor)
+SET(SENSOR_VIRT_NAME bio_hrm_virt_sensor)
+SET(SENSOR_HAL_NAME bio_hrm_sensor_hal)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src/libsensord)
@@ -38,15 +39,25 @@ add_definitions(-Wall -O3 -omit-frame-pointer)
 add_definitions(-DUSE_DLOG_LOG)
 add_definitions(-Iinclude)
 
-add_library(${PROCESSOR_NAME} SHARED
-		bio-hrm-processor.cpp
-		)
-add_library(${SENSOR_NAME} SHARED
-		bio-hrm-sensor.cpp
-		)
+add_library(${SENSOR_PHY_NAME} SHARED
+	${SENSOR_PHY_NAME}.cpp
+)
 
-target_link_libraries(${PROCESSOR_NAME} ${rpkgs_LDFLAGS} ${GLES_LDFLAGS} "-lm")
-target_link_libraries(${SENSOR_NAME} ${rpkgs_LDFLAGS} ${GLES_LDFLAGS})
+add_library(${SENSOR_VIRT_NAME} SHARED
+	hrm_alg.cpp
+	hrm_alg_maxim.cpp
+	hrm_alg_adi.cpp
+	${SENSOR_VIRT_NAME}.cpp
+)
 
-install(TARGETS ${PROCESSOR_NAME} DESTINATION lib/sensor_framework)
-install(TARGETS ${SENSOR_NAME} DESTINATION lib/sensor_framework)
+add_library(${SENSOR_HAL_NAME} SHARED
+	${SENSOR_HAL_NAME}.cpp
+)
+
+target_link_libraries(${SENSOR_PHY_NAME} ${rpkgs_LDFLAGS} ${GLES_LDFLAGS} "-lm")
+target_link_libraries(${SENSOR_VIRT_NAME} ${rpkgs_LDFLAGS} ${GLES_LDFLAGS} "-lm")
+target_link_libraries(${SENSOR_HAL_NAME} ${rpkgs_LDFLAGS} ${GLES_LDFLAGS})
+
+install(TARGETS ${SENSOR_PHY_NAME} DESTINATION lib/sensord)
+install(TARGETS ${SENSOR_VIRT_NAME} DESTINATION lib/sensord)
+install(TARGETS ${SENSOR_HAL_NAME} DESTINATION lib/sensord)

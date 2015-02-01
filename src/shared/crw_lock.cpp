@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -33,14 +33,21 @@ crw_lock::~crw_lock()
 
 void crw_lock::read_lock()
 {
+#ifdef _LOCK_DEBUG
 	cbase_lock::lock(LOCK_TYPE_READ, "read lock", __MODULE__, __func__, __LINE__);
+#else
+	cbase_lock::lock(LOCK_TYPE_READ);
+#endif
 }
 
 void crw_lock::write_lock()
 {
+#ifdef _LOCK_DEBUG
 	cbase_lock::lock(LOCK_TYPE_WRITE, "write lock", __MODULE__, __func__, __LINE__);
+#else
+	cbase_lock::lock(LOCK_TYPE_WRITE);
+#endif
 }
-
 
 int crw_lock::read_lock_impl(void)
 {

@@ -1,5 +1,5 @@
 /*
- * libslp-sensor
+ * libsensord
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -24,38 +24,42 @@
 #include <command_channel.h>
 #include <common.h>
 #include <string.h>
-#include <map>
+#include <unordered_map>
 #include <vector>
-using std::map;
+using std::unordered_map;
 using std::vector;
 
-typedef map<unsigned int,creg_event_info> event_info_map;
+typedef unordered_map<unsigned int,creg_event_info> event_info_map;
 
 class csensor_handle_info {
 public:
 	int m_handle;
-	sensor_type m_sensor_type;
+	sensor_id_t m_sensor_id;
 	int m_sensor_state;
 	int m_sensor_option;
-	int bad_accuracy;
+	int m_bad_accuracy;
+	int m_accuracy;
+	sensor_accuracy_changed_cb_t m_accuracy_cb;
+	void *m_accuracy_user_data;
 
 	csensor_handle_info();
 	~csensor_handle_info();
 
-	bool add_reg_event_info(const unsigned int event_type, const unsigned int interval,
-			const sensor_callback_func_t callback,void* cb_data);
-	bool delete_reg_event_info(const unsigned int event_type);
+	bool add_reg_event_info(unsigned int event_type, unsigned int interval, int cb_type, void *cb,void *user_data);
+	bool delete_reg_event_info(unsigned int event_type);
 
-	bool change_reg_event_interval(const unsigned int event_type, const unsigned int interval);
+	bool change_reg_event_interval(unsigned int event_type, unsigned int interval);
 
-	bool get_reg_event_info(const unsigned int event_type, creg_event_info &event_info);
+	creg_event_info* get_reg_event_info(const unsigned int event_type);
 	void get_reg_event_types(event_type_vector &event_types);
 	unsigned int get_min_interval(void);
 	unsigned int get_reg_event_count(void);
 
 	void clear_all_events(void);
+	static unsigned long long renew_event_id(void);
 private:
 	event_info_map m_reg_event_infos;
+	static unsigned long long m_event_id;
 };
 
 

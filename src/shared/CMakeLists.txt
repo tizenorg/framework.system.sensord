@@ -21,7 +21,7 @@ add_definitions(-DPREFIX="${CMAKE_INSTALL_PREFIX}")
 add_definitions(-DLOCALEDIR="$ENV{DATAFS}/share/locale")
 add_definitions(-DFACTORYFS="$ENV{FACTORYFS}")
 add_definitions(-DDATAFS="$ENV{DATAFS}")
-add_definitions(-Wall -std=gnu++0x)
+add_definitions(-Wall -fPIC -std=gnu++0x)
 add_definitions(-DUSE_DLOG_LOG)
 #add_definitions(-DX1_PROF)
 #add_definitions(-D_GETTEXT)
@@ -33,53 +33,73 @@ add_definitions(-DUSE_DLOG_LOG)
 #add_definitions(-finstrument-functions)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/src/libsensord)
 
-add_library(${PROJECT_NAME} SHARED
-	csensor_module.cpp
-	cfilter_module.cpp
-	cprocessor_module.cpp
-	clist.cpp
-	cmodule.cpp
+add_library(sensord-server SHARED
+	crw_lock.cpp
+	worker_thread.cpp
+	cconfig.cpp
+	csensor_config.cpp
+	cvirtual_sensor_config.cpp
+	csensor_event_queue.cpp
+	csensor_event_dispatcher.cpp
+	csensor_usage.cpp
+	cclient_info_manager.cpp
+	cclient_sensor_record.cpp
+	cinterval_info_list.cpp
+	sensor_plugin_loader.cpp
+	sensor_hal.cpp
+	sensor_base.cpp
+	physical_sensor.cpp
+	virtual_sensor.cpp
+	sensor_fusion.cpp
+)
+
+add_library(sensord-share SHARED
+	cpacket.cpp
+	csocket.cpp
 	cbase_lock.cpp
 	cmutex.cpp
-	crw_lock.cpp
-	cobject_type.cpp
-	cpacket.cpp
-	csock.cpp
-	cworker.cpp
-	cipc_worker.cpp
 	common.cpp
-	cconfig.cpp
-	csensor_event_queue.cpp
-	cinterval_info_list.cpp
-	cevent_socket.cpp
+	sensor_info.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} ${rpkgs_LDFLAGS} "-lrt -ldl -pthread")
+target_link_libraries(sensord-server ${rpkgs_LDFLAGS} "-lrt -ldl -pthread" "sensord-share")
+target_link_libraries(sensord-share ${rpkgs_LDFLAGS} "-lrt -ldl -pthread")
+configure_file(sensord-server.pc.in ${CMAKE_CURRENT_SOURCE_DIR}/sensord-server.pc @ONLY)
 configure_file(${PROJECT_NAME}.pc.in ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.pc @ONLY)
 
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+install(TARGETS sensord-server DESTINATION lib)
+install(TARGETS sensord-share DESTINATION lib)
+install(FILES sensord-server.pc DESTINATION lib/pkgconfig)
 install(FILES ${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 install(FILES
-	sf_common.h
-	csensor_module.h
-	cfilter_module.h
-	cprocessor_module.h
-	clist.h
-	cmodule.h
-	cbase_lock.h
-	cmutex.h
+	sensor_fusion.h
 	crw_lock.h
-	cobject_type.h
-	cpacket.h
-	csock.h
-	cworker.h
-	cipc_worker.h
-	common.h
-	cutil.h
+	worker_thread.h
 	cconfig.h
+	csensor_config.h
+	cvirtual_sensor_config.h
 	csensor_event_queue.h
 	cinterval_info_list.h
-	cevent_socket.h
+	sensor_plugin_loader.h
+	sensor_hal.h
+	sensor_base.h
+	physical_sensor.h
+	virtual_sensor.h
+	sensor_fusion.h
+	sf_common.h
+	cpacket.h
+	csocket.h
+	cbase_lock.h
+	cmutex.h
+	common.h
+	sensor_info.h
 	DESTINATION include/${PROJECT_NAME}
 )
+
+install(FILES
+	sensor_common.h
+	DESTINATION include/sensor
+)
+

@@ -7,8 +7,8 @@ SET(LIBDIR "\${prefix}/lib")
 SET(INCLUDEDIR "\${prefix}/include")
 SET(VERSION 1.0)
 
-SET(PROCESSOR_NAME context_processor)
 SET(SENSOR_NAME context_sensor)
+SET(SENSOR_HAL_NAME context_sensor_hal)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src/libsensord)
@@ -38,17 +38,16 @@ add_definitions(-Wall -g -D_DEBUG)
 add_definitions(-DUSE_DLOG_LOG)
 add_definitions(-Iinclude)
 
-add_library(${PROCESSOR_NAME} SHARED
-		context-processor.cpp
-		command_history.cpp
-		)
-
 add_library(${SENSOR_NAME} SHARED
-		context-sensor.cpp
+		context_sensor.cpp
 		)
 
-target_link_libraries(${PROCESSOR_NAME} ${rpkgs_LDFLAGS} ${GLES_LDFLAGS} "-lm")
-target_link_libraries(${SENSOR_NAME} ${rpkgs_LDFLAGS} ${GLES_LDFLAGS})
+add_library(${SENSOR_HAL_NAME} SHARED
+		context_sensor_hal.cpp
+		)
 
-install(TARGETS ${PROCESSOR_NAME} DESTINATION lib/sensor_framework)
-install(TARGETS ${SENSOR_NAME} DESTINATION lib/sensor_framework)
+target_link_libraries(${SENSOR_NAME} ${rpkgs_LDFLAGS} ${GLES_LDFLAGS} "-lm")
+target_link_libraries(${SENSOR_HAL_NAME} ${rpkgs_LDFLAGS} ${GLES_LDFLAGS})
+
+install(TARGETS ${SENSOR_NAME} DESTINATION lib/sensord)
+install(TARGETS ${SENSOR_HAL_NAME} DESTINATION lib/sensord)

@@ -1,5 +1,5 @@
 /*
- * libslp-sensor
+ * libsensord
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -36,7 +36,7 @@ public:
 	poller(int fd);
 	~poller();
 
-	bool poll(void);
+	bool poll(int &event);
 private:
 	int m_epfd;
 	queue<int> m_event_queue;

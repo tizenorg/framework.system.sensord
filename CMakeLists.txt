@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 project(sensord_main CXX)
 
 include(FindPkgConfig)
-pkg_check_modules(rpkgs REQUIRED glib-2.0 gio-2.0 vconf deviced dlog libxml-2.0 libsystemd-daemon)
+pkg_check_modules(rpkgs REQUIRED glib-2.0 gio-2.0 vconf dlog libxml-2.0 libsystemd-daemon)
 add_definitions(${rpkgs_CFLAGS})
 
 # to install pkgconfig setup file.
@@ -31,37 +31,18 @@ ELSE("${ARCH}" MATCHES "^arm.*")
         MESSAGE("add -DSIMULATOR")
 ENDIF("${ARCH}" MATCHES "^arm.*")
 
-IF("${ARCH}" MATCHES "^arm.*")
-	CONFIGURE_FILE(sf_sensor.conf.in sf_sensor.conf @ONLY)
-	CONFIGURE_FILE(sf_filter.conf.in sf_filter.conf @ONLY)
-	CONFIGURE_FILE(sf_processor.conf.in sf_processor.conf @ONLY)
-	CONFIGURE_FILE(sf_data_stream.conf.in sf_data_stream.conf @ONLY)
-	CONFIGURE_FILE(sensors.xml.in sensors.xml @ONLY)
-	install(FILES
-		sf_sensor.conf
-		sf_filter.conf
-		sf_processor.conf
-		sf_data_stream.conf
-		sensors.xml
-		DESTINATION etc)
-ELSE("${ARCH}" MATCHES "^arm.*")
-	CONFIGURE_FILE(sf_sensor_sim.conf.in sf_sensor.conf @ONLY)
-	CONFIGURE_FILE(sf_filter_sim.conf.in sf_filter.conf @ONLY)
-	CONFIGURE_FILE(sf_processor_sim.conf.in sf_processor.conf @ONLY)
-	CONFIGURE_FILE(sf_data_stream_sim.conf.in sf_data_stream.conf @ONLY)
-	CONFIGURE_FILE(sensors.xml.in sensors.xml @ONLY)
-	install(FILES
-		sf_sensor.conf
-		sf_filter.conf
-		sf_processor.conf
-		sf_data_stream.conf
-		sensors.xml
-		DESTINATION etc)
-ENDIF("${ARCH}" MATCHES "^arm.*")
+CONFIGURE_FILE(sensor_plugins.xml.in sensor_plugins.xml @ONLY)
+CONFIGURE_FILE(sensors.xml.in sensors.xml @ONLY)
+CONFIGURE_FILE(virtual_sensors.xml.in virtual_sensors.xml @ONLY)
+install(FILES
+	sensor_plugins.xml
+	sensors.xml
+	virtual_sensors.xml
+	DESTINATION etc)
 
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE DESTINATION share/license RENAME sensord)
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE DESTINATION share/license RENAME libsensord)
 
-INSTALL(FILES sensord.rule DESTINATION /etc/smack/accesses2.d)
+INSTALL(FILES sensord.efl DESTINATION /etc/smack/accesses.d)
 
 add_subdirectory(src)

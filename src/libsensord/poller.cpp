@@ -1,5 +1,5 @@
 /*
- * libslp-sensor
+ * libsensord
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -46,7 +46,7 @@ bool poller::create(int fd)
 
 bool poller::fill_event_queue(void)
 {
-	const int EPOLL_MAX_EVENT = 16;
+	const int EPOLL_MAX_EVENT = 1;
 
 	struct epoll_event event_items[EPOLL_MAX_EVENT];
 	int nr_events = epoll_wait(m_epfd, event_items, EPOLL_MAX_EVENT, -1);
@@ -72,8 +72,10 @@ bool poller::fill_event_queue(void)
 }
 
 
-bool poller::poll(void)
+bool poller::poll(int &event)
 {
+	event = 0;
+
 	while (true) {
 		if (m_event_queue.empty()) {
 			if (!fill_event_queue())
@@ -81,7 +83,7 @@ bool poller::poll(void)
 		}
 
 		if (!m_event_queue.empty()) {
-			int event = m_event_queue.front();
+			event = m_event_queue.front();
 			m_event_queue.pop();
 
 			if (event & EPOLLERR) {

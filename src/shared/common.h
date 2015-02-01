@@ -1,5 +1,5 @@
 /*
- * libsf-common
+ * libsensord-share
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *
@@ -39,6 +39,9 @@ extern "C"
 #if !defined(NAME_MAX)
 #define NAME_MAX 256
 #endif
+
+
+#define SENSOR_TYPE_SHIFT 16
 
 enum sf_log_type {
 	SF_LOG_PRINT_FILE		= 1,
@@ -210,9 +213,16 @@ void sf_log(int type , int priority , const char *tag , const char *fmt , ...);
 
 #endif
 
+struct sensor_data_t;
+struct sensorhub_data_t;
+typedef struct sensor_data_t sensor_data_t;
+typedef struct sensorhub_data_t sensorhub_data_t;
+
 const char* get_client_name(void);
 bool get_proc_name(pid_t pid, char *process_name);
-
+bool is_sensorhub_event(unsigned int event_type);
+void copy_sensor_data(sensor_data_t *dest, sensor_data_t *src);
+void copy_sensorhub_data(sensorhub_data_t *dest, sensorhub_data_t *src);
 
 #ifdef __cplusplus
 }
