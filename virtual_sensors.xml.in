@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VIRTUAL_SENSOR>
+	<DEVICE type="Mobile-Emulator">
+		<ORIENTATION>
+			<NAME value="ORIENTATION_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="DEGREES" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<GYRO_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<GEOMAGNETIC_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="-1" value3="-1" />
+			<GYRO_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GEOMAGNETIC_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="-1" value3="-1" />
+			<ACCEL_SCALE value="1" />
+			<GYRO_SCALE value="1146" />
+			<GEOMAGNETIC_SCALE value="1" />
+			<MAGNETIC_ALIGNMENT_FACTOR value="1" />
+			<AZIMUTH_ROTATION_COMPENSATION value="-1" />
+			<PITCH_ROTATION_COMPENSATION value="-1" />
+			<ROLL_ROTATION_COMPENSATION value="-1" />
+		</ORIENTATION>
+
+		<GRAVITY>
+			<NAME value="GRAVITY_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="M/S^2" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<GRAVITY_SIGN_COMPENSATION value1="-1" value2="-1" value3="-1" />
+		</GRAVITY>
+
+		<LINEAR_ACCEL>
+			<NAME value="LINEAR_ACCEL_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="M/S^2" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="-1" value3="-1" />
+			<ACCEL_SCALE value="1" />
+			<LINEAR_ACCEL_SIGN_COMPENSATION value1="1" value2="1" value3="1" />
+		</LINEAR_ACCEL>
+
+		<ROTATION_VECTOR>
+			<NAME value="RV_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<GYRO_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<GEOMAGNETIC_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="-1" value3="-1" />
+			<GYRO_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GEOMAGNETIC_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="-1" value3="-1" />
+			<ACCEL_SCALE value="1" />
+			<GYRO_SCALE value="1146" />
+			<GEOMAGNETIC_SCALE value="1" />
+			<MAGNETIC_ALIGNMENT_FACTOR value="1" />
+		</ROTATION_VECTOR>
+	</DEVICE>
+
+	<DEVICE type="Wearable-Emulator">
+		<ORIENTATION>
+			<NAME value="ORIENTATION_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="DEGREES" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<GYRO_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<GEOMAGNETIC_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="-1" value3="-1" />
+			<GYRO_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GEOMAGNETIC_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="-1" value3="-1" />
+			<ACCEL_SCALE value="1" />
+			<GYRO_SCALE value="1146" />
+			<GEOMAGNETIC_SCALE value="1" />
+			<MAGNETIC_ALIGNMENT_FACTOR value="1" />
+			<AZIMUTH_ROTATION_COMPENSATION value="-1" />
+			<PITCH_ROTATION_COMPENSATION value="-1" />
+			<ROLL_ROTATION_COMPENSATION value="-1" />
+		</ORIENTATION>
+
+		<GRAVITY>
+			<NAME value="GRAVITY_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="M/S^2" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<GRAVITY_SIGN_COMPENSATION value1="-1" value2="-1" value3="-1" />
+		</GRAVITY>
+
+		<LINEAR_ACCEL>
+			<NAME value="LINEAR_ACCEL_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="M/S^2" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="-1" value3="-1" />
+			<ACCEL_SCALE value="1" />
+			<LINEAR_ACCEL_SIGN_COMPENSATION value1="1" value2="1" value3="1" />
+		</LINEAR_ACCEL>
+
+		<ROTATION_VECTOR>
+			<NAME value="RV_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<GYRO_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<GEOMAGNETIC_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="-1" value3="-1" />
+			<GYRO_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GEOMAGNETIC_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="-1" value3="-1" />
+			<ACCEL_SCALE value="1" />
+			<GYRO_SCALE value="1146" />
+			<GEOMAGNETIC_SCALE value="1" />
+			<MAGNETIC_ALIGNMENT_FACTOR value="1" />
+		</ROTATION_VECTOR>
+	</DEVICE>
+
+	<DEVICE type="Wearable-B3">
+		<ORIENTATION>
+			<NAME value="ORIENTATION_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="DEGREES" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="-0.808774" value2="0.937986" value3="-0.19521" />
+			<GYRO_STATIC_BIAS value1="2.197440" value2="3.118240" value3="4.028640" />
+			<GEOMAGNETIC_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GYRO_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GEOMAGNETIC_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<ACCEL_SCALE value="1" />
+			<GYRO_SCALE value="1146" />
+			<GEOMAGNETIC_SCALE value="1" />
+			<MAGNETIC_ALIGNMENT_FACTOR value="-1" />
+			<AZIMUTH_ROTATION_COMPENSATION value="1" />
+			<PITCH_ROTATION_COMPENSATION value="-1" />
+			<ROLL_ROTATION_COMPENSATION value="-1" />
+		</ORIENTATION>
+
+		<GRAVITY>
+			<NAME value="GRAVITY_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="M/S^2" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<GRAVITY_SIGN_COMPENSATION value1="1" value2="1" value3="1" />
+		</GRAVITY>
+
+		<LINEAR_ACCEL>
+			<NAME value="LINEAR_ACCEL_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="M/S^2" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="-0.808774" value2="0.937986" value3="-0.19521" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<ACCEL_SCALE value="1" />
+			<LINEAR_ACCEL_SIGN_COMPENSATION value1="1" value2="1" value3="1" />
+		</LINEAR_ACCEL>
+
+		<ROTATION_VECTOR>
+			<NAME value="RV_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="-0.808774" value2="0.937986" value3="-0.19521" />
+			<GYRO_STATIC_BIAS value1="2.197440" value2="3.118240" value3="4.028640" />
+			<GEOMAGNETIC_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GYRO_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GEOMAGNETIC_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<ACCEL_SCALE value="1" />
+			<GYRO_SCALE value="1146" />
+			<GEOMAGNETIC_SCALE value="1" />
+			<MAGNETIC_ALIGNMENT_FACTOR value="-1" />
+		</ROTATION_VECTOR>
+	</DEVICE>
+
+	<DEVICE type="Mobile-RD-PQ">
+		<ORIENTATION>
+			<NAME value="ORIENTATION_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="DEGREES" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0.064444" value2="0.15789" value3="-0.36865" />
+			<GYRO_STATIC_BIAS value1="3.5638" value2="-5.8288" value3="-0.79750" />
+			<GEOMAGNETIC_STATIC_BIAS value1="2.5" value2="6.5" value3="4.5" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GYRO_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GEOMAGNETIC_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<ACCEL_SCALE value="1" />
+			<GYRO_SCALE value="1150" />
+			<GEOMAGNETIC_SCALE value="1" />
+			<MAGNETIC_ALIGNMENT_FACTOR value="1" />
+			<AZIMUTH_ROTATION_COMPENSATION value="-1" />
+			<PITCH_ROTATION_COMPENSATION value="-1" />
+			<ROLL_ROTATION_COMPENSATION value="-1" />
+		</ORIENTATION>
+
+		<GRAVITY>
+			<NAME value="GRAVITY_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="M/S^2" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<GRAVITY_SIGN_COMPENSATION value1="1" value2="1" value3="1" />
+		</GRAVITY>
+
+		<LINEAR_ACCEL>
+			<NAME value="LINEAR_ACCEL_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="M/S^2" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<ACCEL_SCALE value="1" />
+			<LINEAR_ACCEL_SIGN_COMPENSATION value1="1" value2="1" value3="1" />
+		</LINEAR_ACCEL>
+
+		<ROTATION_VECTOR>
+			<NAME value="RV_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0.064444" value2="0.15789" value3="-0.36865" />
+			<GYRO_STATIC_BIAS value1="3.5638" value2="-5.8288" value3="-0.79750" />
+			<GEOMAGNETIC_STATIC_BIAS value1="2.5" value2="6.5" value3="4.5" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GYRO_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<GEOMAGNETIC_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<ACCEL_SCALE value="1" />
+			<GYRO_SCALE value="1150" />
+			<GEOMAGNETIC_SCALE value="1" />
+			<MAGNETIC_ALIGNMENT_FACTOR value="1" />
+		</ROTATION_VECTOR>
+	</DEVICE>
+
+	<DEVICE type="Mobile-RD-PQ_V2">
+		<ORIENTATION>
+			<NAME value="ORIENTATION_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="DEGREES" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0.046091" value2="0.127486" value3="0.10787" />
+			<GYRO_STATIC_BIAS value1="-0.54385" value2="0.24325" value3="0.87875" />
+			<GEOMAGNETIC_STATIC_BIAS value1="-2.25" value2="-5.5" value3="1.35" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="1" value2="-1" value3="1" />
+			<GYRO_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="1" value3="-1" />
+			<GEOMAGNETIC_ROTATION_DIRECTION_COMPENSATION value1="1" value2="-1" value3="1" />
+			<ACCEL_SCALE value="1" />
+			<GYRO_SCALE value="1150" />
+			<GEOMAGNETIC_SCALE value="1" />
+			<MAGNETIC_ALIGNMENT_FACTOR value="-1" />
+			<AZIMUTH_ROTATION_COMPENSATION value="1" />
+			<PITCH_ROTATION_COMPENSATION value="1" />
+			<ROLL_ROTATION_COMPENSATION value="-1" />
+		</ORIENTATION>
+
+		<GRAVITY>
+			<NAME value="GRAVITY_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="M/S^2" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<GRAVITY_SIGN_COMPENSATION value1="1" value2="1" value3="1" />
+		</GRAVITY>
+
+		<LINEAR_ACCEL>
+			<NAME value="LINEAR_ACCEL_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<RAW_DATA_UNIT value="M/S^2" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0" value2="0" value3="0" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="1" value2="1" value3="1" />
+			<ACCEL_SCALE value="1" />
+			<LINEAR_ACCEL_SIGN_COMPENSATION value1="1" value2="1" value3="1" />
+		</LINEAR_ACCEL>
+
+		<ROTATION_VECTOR>
+			<NAME value="RV_SENSOR" />
+			<VENDOR value="SAMSUNG" />
+			<DEFAULT_SAMPLING_TIME value="100" />
+			<ACCEL_STATIC_BIAS value1="0.046091" value2="0.127486" value3="0.10787" />
+			<GYRO_STATIC_BIAS value1="-0.54385" value2="0.24325" value3="0.87875" />
+			<GEOMAGNETIC_STATIC_BIAS value1="-2.25" value2="-5.5" value3="1.35" />
+			<ACCEL_ROTATION_DIRECTION_COMPENSATION value1="1" value2="-1" value3="1" />
+			<GYRO_ROTATION_DIRECTION_COMPENSATION value1="-1" value2="1" value3="-1" />
+			<GEOMAGNETIC_ROTATION_DIRECTION_COMPENSATION value1="1" value2="-1" value3="1" />
+			<ACCEL_SCALE value="1" />
+			<GYRO_SCALE value="1150" />
+			<GEOMAGNETIC_SCALE value="1" />
+			<MAGNETIC_ALIGNMENT_FACTOR value="-1" />
+		</ROTATION_VECTOR>
+	</DEVICE>
+</VIRTUAL_SENSOR>
