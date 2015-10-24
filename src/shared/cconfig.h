@@ -24,16 +24,12 @@
 #include <unordered_map>
 #include <common.h>
 
-using std::unordered_map;
-using std::string;
-using std::istringstream;
-
 class cconfig
 {
 protected:
-	virtual bool load_config(const string& config_path) = 0;
+	virtual bool load_config(const std::string& config_path) = 0;
 
-	string m_device_id;
+	std::string m_device_id;
 public:
 	cconfig();
 	virtual ~cconfig();

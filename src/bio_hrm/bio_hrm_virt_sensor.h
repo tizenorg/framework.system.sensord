@@ -22,9 +22,6 @@
 
 #include <sensor_internal.h>
 #include <vconf.h>
-#include <string>
-
-using std::string;
 
 class hrm_alg;
 
@@ -34,14 +31,14 @@ public:
 	virtual ~bio_hrm_virt_sensor();
 
 	bool init();
-	sensor_type_t get_type(void);
+	virtual void get_types(std::vector<sensor_type_t> &types);
 
 	static bool working(void *inst);
 
-	void synthesize(const sensor_event_t& event, vector<sensor_event_t> &outs);
+	void synthesize(const sensor_event_t& event, std::vector<sensor_event_t> &outs);
 
 	int get_sensor_data(unsigned int data_id, sensor_data_t &data);
-	virtual bool get_properties(sensor_properties_t &properties);
+	virtual bool get_properties(sensor_type_t sensor_type, sensor_properties_t &properties);
 private:
 	sensor_base *m_accel_sensor;
 	sensor_base *m_bio_sensor;
@@ -60,7 +57,7 @@ private:
 	virtual bool on_start(void);
 	virtual bool on_stop(void);
 	void reset(void);
-	hrm_alg* get_alg(const string &model_id);
+	hrm_alg* get_alg(const std::string &model_id);
 };
 
 #endif

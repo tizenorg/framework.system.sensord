@@ -1,7 +1,7 @@
 /*
  * libsensord
  *
- * Copyright (c) 2014 Samsung Electronics Co., Ltd.
+ * Copyright (c) 2015 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
  *
  */
 
-#ifndef __SENSOR_UNCAL_GEOMAG_H__
-#define __SENSOR_UNCAL_GEOMAG_H__
+#ifndef __SENSOR_GEOMAGNETIC_RV_H__
+#define __SENSOR_GEOMAGNETIC_RV_H__
 
-//! Pre-defined events for the geomagnetic sensor
+//! Pre-defined events for the geomagnetic rotation vector sensor
 //! Sensor Plugin developer can add more event to their own headers
 
 #ifdef __cplusplus
@@ -29,20 +29,15 @@ extern "C"
 #endif
 
 /**
- * @defgroup UNCAL_SENSOR_GEOMAG Geomagnetic Sensor
+ * @defgroup SENSOR_GEOMAGNETIC_RV Geomagnetic Rotation Vector Sensor
  * @ingroup SENSOR_FRAMEWORK
  *
- * These APIs are used to control the Geomagnatic sensor.
+ * These APIs are used to control the Geomagnetic Rotation Vector sensor.
  * @{
  */
 
-enum uncal_geomag_data_id {
-	UNCAL_GEOMAGNETIC_BASE_DATA_SET		= (UNCAL_GEOMAGNETIC_SENSOR << 16) | 0x0001,
-	UNCAL_GEOMAGNETIC_RAW_DATA_SET 		= (UNCAL_GEOMAGNETIC_SENSOR << 16) | 0x0001,
-};
-
-enum uncal_geomag_evet_type {
-	UNCAL_GEOMAGNETIC_EVENT_RAW_DATA_REPORT_ON_TIME       = (UNCAL_GEOMAGNETIC_SENSOR << 16) | 0x0001,
+enum geomagnetic_rv_event_type {
+	GEOMAGNETIC_RV_EVENT_RAW_DATA_REPORT_ON_TIME	= (GEOMAGNETIC_RV_SENSOR << 16) | 0x0001,
 };
 
 /**
@@ -53,5 +48,4 @@ enum uncal_geomag_evet_type {
 }
 #endif
 
-#endif
-//! End of a file
+#endif /* __SENSOR_GEOMAGNETIC_RV_H__ */

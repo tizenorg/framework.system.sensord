@@ -17,10 +17,10 @@
  *
  */
 
-#ifndef __SENSOR_UNCAL_GYRO_H__
-#define __SENSOR_UNCAL_GYRO_H__
+#ifndef __SENSOR_GEOMAG_UNCAL_H__
+#define __SENSOR_GEOMAG_UNCAL_H__
 
-//! Pre-defined events for the uncal gyroscope sensor
+//! Pre-defined events for the geomagnetic sensor
 //! Sensor Plugin developer can add more event to their own headers
 
 #ifdef __cplusplus
@@ -29,19 +29,20 @@ extern "C"
 #endif
 
 /**
- * @defgroup UNCAL_SENSOR_GYRO Gyro Sensor
+ * @defgroup SENSOR_GEOMAG_UNCAL Geomagnetic Sensor
  * @ingroup SENSOR_FRAMEWORK
  *
- * These APIs are used to control the gyro sensor.
+ * These APIs are used to control the Geomagnatic sensor.
  * @{
  */
 
-enum uncal_gyro_data_id {
-	UNCAL_GYRO_BASE_DATA_SET	= (UNCAL_GYROSCOPE_SENSOR << 16) | 0x0001,
+enum geomag_uncal_data_id {
+	GEOMAGNETIC_UNCAL_BASE_DATA_SET		= (GEOMAGNETIC_UNCAL_SENSOR << 16) | 0x0001,
+	GEOMAGNETIC_UNCAL_RAW_DATA_SET 		= (GEOMAGNETIC_UNCAL_SENSOR << 16) | 0x0001,
 };
 
-enum uncal_gyro_event_type {
-	UNCAL_GYROSCOPE_EVENT_RAW_DATA_REPORT_ON_TIME	= (UNCAL_GYROSCOPE_SENSOR << 16) | 0x0001,
+enum geomag_uncal_evet_type {
+	GEOMAGNETIC_UNCAL_EVENT_RAW_DATA_REPORT_ON_TIME       = (GEOMAGNETIC_UNCAL_SENSOR << 16) | 0x0001,
 };
 
 /**

@@ -23,23 +23,28 @@
 #include <sensor_plugin_loader.h>
 #include <sensor_base.h>
 #include <dlfcn.h>
+#include <vector>
+
+using std::vector;
 
 #define SECURITY_LIB "/usr/lib/libsecurity-server-client.so.1"
 #define SECURITY_SERVER_API_ERROR_ACCESS_DENIED -11
 
 permission_checker::permission_checker()
-: m_permission_set(0)
-, security_server_check_privilege_by_sockfd(NULL)
+:  security_server_check_privilege_by_sockfd(NULL)
 , m_security_handle(NULL)
-
+, m_permission_set(0)
 {
 	init();
 }
 
 permission_checker::~permission_checker()
 {
-	if (m_security_handle)
+	if (m_security_handle) {
 		dlclose(m_security_handle);
+		m_security_handle = NULL;
+		security_server_check_privilege_by_sockfd = NULL;
+	}
 }
 
 permission_checker& permission_checker::get_instance()
@@ -79,7 +84,7 @@ void permission_checker::init()
 	vector<sensor_base *> sensors;
 	sensors = sensor_plugin_loader::get_instance().get_sensors(ALL_SENSOR);
 
-	for (int i = 0; i < sensors.size(); ++i)
+	for (unsigned int i = 0; i < sensors.size(); ++i)
 		m_permission_set |= sensors[i]->get_permission();
 
 	INFO("Permission Set = %d", m_permission_set);
@@ -93,7 +98,7 @@ int permission_checker::get_permission(int sock_fd)
 	int permission = SENSOR_PERMISSION_NONE;
 	int ret = SECURITY_SERVER_API_ERROR_ACCESS_DENIED;
 
-	for (int i = 0; i < m_permission_infos.size(); ++i) {
+	for (unsigned int i = 0; i < m_permission_infos.size(); ++i) {
 		if (!m_permission_infos[i]->need_to_check) {
 			permission |= m_permission_infos[i]->permission;
 		} else if ((m_permission_set & m_permission_infos[i]->permission) && security_server_check_privilege_by_sockfd) {

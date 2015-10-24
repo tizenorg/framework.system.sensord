@@ -44,6 +44,8 @@ public:
 			const quaternion<T> q2);
 	template<typename T> friend quaternion<T> phase_correction(const quaternion<T> q1,
 			const quaternion<T> q2);
+	template<typename T> friend quaternion<T> axis2quat(const vect<T> axis,
+			const T angle);
 };
 
 #include "quaternion.cpp"

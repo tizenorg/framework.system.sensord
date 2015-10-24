@@ -31,13 +31,25 @@ physical_sensor::~physical_sensor()
 
 }
 
-bool physical_sensor::push(sensor_event_t const &event)
+bool physical_sensor::push(const sensor_event_t &event)
 {
 	csensor_event_queue::get_instance().push(event);
 	return true;
 }
 
-bool physical_sensor::push(sensorhub_event_t const &event)
+bool physical_sensor::push(sensor_event_t *event)
+{
+	csensor_event_queue::get_instance().push(event);
+	return true;
+}
+
+bool physical_sensor::push(const sensorhub_event_t &event)
+{
+	csensor_event_queue::get_instance().push(event);
+	return true;
+}
+
+bool physical_sensor::push(sensorhub_event_t *event)
 {
 	csensor_event_queue::get_instance().push(event);
 	return true;

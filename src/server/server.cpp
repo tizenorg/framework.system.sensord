@@ -43,10 +43,17 @@ int server::get_systemd_socket(const char *name)
 	size_t length = 0;
 	int fd = -1;
 
-	if (sd_listen_fds(1) != 1)
+	if (sd_listen_fds(1) < 0) {
+		ERR("Failed to listen fds from systemd");
 		return -1;
+	}
 
 	fd = SD_LISTEN_FDS_START + 0;
+
+	if (sd_is_socket_unix(fd, type, listening, name, length) > 0)
+		return fd;
+
+	fd = SD_LISTEN_FDS_START + 1;
 
 	if (sd_is_socket_unix(fd, type, listening, name, length) > 0)
 		return fd;

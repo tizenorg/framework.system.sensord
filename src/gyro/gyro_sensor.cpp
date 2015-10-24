@@ -23,6 +23,9 @@
 #include <gyro_sensor.h>
 #include <sensor_plugin_loader.h>
 
+using std::string;
+using std::vector;
+
 #define MS_TO_US 1000
 #define DPS_TO_MDPS 1000
 #define RAW_DATA_TO_DPS_UNIT(X) ((float)(X)/((float)DPS_TO_MDPS))
@@ -48,7 +51,7 @@ gyro_sensor::~gyro_sensor()
 
 bool gyro_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(GYROSCOPE_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_GYROSCOPE);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -69,9 +72,9 @@ bool gyro_sensor::init()
 	return true;
 }
 
-sensor_type_t gyro_sensor::get_type(void)
+void gyro_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return GYROSCOPE_SENSOR;
+	types.push_back(GYROSCOPE_SENSOR);
 }
 
 bool gyro_sensor::working(void *inst)
@@ -128,7 +131,7 @@ bool gyro_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool gyro_sensor::get_properties(sensor_properties_t &properties)
+bool gyro_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }

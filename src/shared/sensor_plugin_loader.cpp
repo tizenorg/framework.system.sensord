@@ -33,6 +33,11 @@
 using std::make_pair;
 using std::equal;
 using std::unordered_set;
+using std::pair;
+using std::vector;
+using std::string;
+using std::shared_ptr;
+using std::static_pointer_cast;
 
 #define ROOT_ELEMENT "PLUGIN"
 #define TEXT_ELEMENT "text"
@@ -103,12 +108,12 @@ bool sensor_plugin_loader::insert_module(plugin_type type, const string &path)
 		if (!load_module(path, hals, handle))
 			return false;
 
-		sensor_hal* hal;
+		shared_ptr<sensor_hal> hal;
 
-		for (int i = 0; i < hals.size(); ++i) {
-			hal = static_cast<sensor_hal*> (hals[i]);
-			sensor_type_t sensor_type = hal->get_type();
-			m_sensor_hals.insert(make_pair(sensor_type, hal));
+		for (unsigned int i = 0; i < hals.size(); ++i) {
+			hal.reset(static_cast<sensor_hal*> (hals[i]));
+			sensor_hal_type_t sensor_hal_type = hal->get_type();
+			m_sensor_hals.insert(make_pair(sensor_hal_type, hal));
 		}
 	} else if (type == PLUGIN_TYPE_SENSOR) {
 		DBG("Insert Sensor plugin [%s]", path.c_str());
@@ -119,28 +124,31 @@ bool sensor_plugin_loader::insert_module(plugin_type type, const string &path)
 		if (!load_module(path, sensors, handle))
 			return false;
 
-		sensor_base* sensor;
+		shared_ptr<sensor_base> sensor;
 
-		for (int i = 0; i < sensors.size(); ++i) {
-			sensor = static_cast<sensor_base*> (sensors[i]);
+		for (unsigned int i = 0; i < sensors.size(); ++i) {
+			sensor.reset(static_cast<sensor_base*> (sensors[i]));
 
 			if (!sensor->init()) {
 				ERR("Failed to init [%s] module\n", sensor->get_name());
-				delete sensor;
 				continue;
 			}
 
 			DBG("init [%s] module", sensor->get_name());
 
-			sensor_type_t sensor_type = sensor->get_type();
+			vector<sensor_type_t> sensor_types;
+
+			sensor->get_types(sensor_types);
 
 			if (sensor->is_fusion())
-				m_fusions.push_back((sensor_fusion*) sensor);
+				m_fusions.push_back(static_pointer_cast<sensor_fusion> (sensor));
 			else {
-				int idx;
-				idx = m_sensors.count(sensor_type);
-				sensor->set_id(idx << SENSOR_INDEX_SHIFT | sensor_type);
-				m_sensors.insert(make_pair(sensor_type, sensor));
+				for (unsigned int i = 0; i < sensor_types.size(); ++i) {
+					int idx;
+					idx = m_sensors.count(sensor_types[i]);
+					sensor->add_id(idx << SENSOR_INDEX_SHIFT | sensor_types[i]);
+					m_sensors.insert(make_pair(sensor_types[i], sensor));
+				}
 			}
 		}
 	}else {
@@ -208,10 +216,10 @@ void sensor_plugin_loader::show_sensor_info(void)
 	auto it = m_sensors.begin();
 
 	while (it != m_sensors.end()) {
-		sensor_base* sensor = it->second;
+		shared_ptr<sensor_base> sensor = it->second;
 
 		sensor_info info;
-		sensor->get_sensor_info(info);
+		sensor->get_sensor_info(it->first, info);
 		INFO("No:%d [%s]\n", ++index, sensor->get_name());
 		info.show();
 		it++;
@@ -238,7 +246,7 @@ bool sensor_plugin_loader::get_paths_from_dir(const string &dir_path, vector<str
 
 	string name;
 
-	while (dir_entry = readdir(dir)) {
+	while ((dir_entry = readdir(dir))) {
 		name = string(dir_entry->d_name);
 
 		if (equal(PLUGIN_POSTFIX.rbegin(), PLUGIN_POSTFIX.rend(), name.rbegin())) {
@@ -329,24 +337,24 @@ bool sensor_plugin_loader::get_paths_from_config(const string &config_path, vect
 
 }
 
-sensor_hal* sensor_plugin_loader::get_sensor_hal(sensor_type_t type)
+sensor_hal* sensor_plugin_loader::get_sensor_hal(sensor_hal_type_t type)
 {
 	auto it_plugins = m_sensor_hals.find(type);
 
 	if (it_plugins == m_sensor_hals.end())
 		return NULL;
 
-	return it_plugins->second;
+	return it_plugins->second.get();
 }
 
-vector<sensor_hal *> sensor_plugin_loader::get_sensor_hals(sensor_type_t type)
+vector<sensor_hal *> sensor_plugin_loader::get_sensor_hals(sensor_hal_type_t type)
 {
 	vector<sensor_hal *> sensor_hal_list;
 	pair<sensor_hal_plugins::iterator, sensor_hal_plugins::iterator> ret;
 	ret = m_sensor_hals.equal_range(type);
 
 	for (auto it = ret.first; it != ret.second; ++it)
-		sensor_hal_list.push_back(it->second);
+		sensor_hal_list.push_back(it->second.get());
 
 	return sensor_hal_list;
 }
@@ -358,7 +366,7 @@ sensor_base* sensor_plugin_loader::get_sensor(sensor_type_t type)
 	if (it_plugins == m_sensors.end())
 		return NULL;
 
-	return it_plugins->second;
+	return it_plugins->second.get();
 }
 
 vector<sensor_base *> sensor_plugin_loader::get_sensors(sensor_type_t type)
@@ -372,7 +380,7 @@ vector<sensor_base *> sensor_plugin_loader::get_sensors(sensor_type_t type)
 		ret = m_sensors.equal_range(type);
 
 	for (auto it = ret.first; it != ret.second; ++it)
-		sensor_list.push_back(it->second);
+		sensor_list.push_back(it->second.get());
 
 	return sensor_list;
 }
@@ -380,11 +388,10 @@ vector<sensor_base *> sensor_plugin_loader::get_sensors(sensor_type_t type)
 
 sensor_base* sensor_plugin_loader::get_sensor(sensor_id_t id)
 {
-	const int SENSOR_TYPE_MASK = 0x0000FFFF;
 	vector<sensor_base *> sensors;
 
 	sensor_type_t type = (sensor_type_t) (id & SENSOR_TYPE_MASK);
-	int index = id >> SENSOR_INDEX_SHIFT;
+	unsigned int index = id >> SENSOR_INDEX_SHIFT;
 
 	sensors = get_sensors(type);
 
@@ -401,7 +408,7 @@ vector<sensor_base *> sensor_plugin_loader::get_virtual_sensors(void)
 	sensor_base* module;
 
 	for (auto sensor_it = m_sensors.begin(); sensor_it != m_sensors.end(); ++sensor_it) {
-		module = sensor_it->second;
+		module = sensor_it->second.get();
 
 		if (module && module->is_virtual() == true) {
 			virtual_list.push_back(module);
@@ -416,41 +423,16 @@ sensor_fusion* sensor_plugin_loader::get_fusion(void)
 	if (m_fusions.empty())
 		return NULL;
 
-	return m_fusions.front();
+	return m_fusions.front().get();
 }
 
 vector<sensor_fusion *> sensor_plugin_loader::get_fusions(void)
 {
-	return m_fusions;
-}
+	vector<sensor_fusion *> fusions;
 
-bool sensor_plugin_loader::destroy()
-{
-	sensor_base* sensor;
+	for (auto fusion_it = m_fusions.begin(); fusion_it != m_fusions.end(); ++fusion_it)
+		fusions.push_back(fusion_it->get());
 
-	for (auto sensor_it = m_sensors.begin(); sensor_it != m_sensors.end(); ++sensor_it) {
-		sensor = sensor_it->second;
-
-		//need to dlclose
-		//unregister_module(module);
-
-		delete sensor;
-	}
-
-	sensor_hal* sensor_hal;
-
-	for (auto sensor_hal_it = m_sensor_hals.begin(); sensor_hal_it != m_sensor_hals.end(); ++sensor_hal_it) {
-		sensor_hal = sensor_hal_it->second;
-
-		// need to dlclose
-		//unregister_module(module);
-
-		delete sensor_hal;
-	}
-
-	m_sensors.clear();
-	m_sensor_hals.clear();
-
-	return true;
+	return fusions;
 }
 

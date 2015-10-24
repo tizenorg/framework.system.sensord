@@ -21,7 +21,6 @@
 #define _CINTERVAL_INFO_LIST_CLASS_H_
 
 #include <list>
-using std::list;
 
 class cinterval_info
 {
@@ -32,7 +31,7 @@ public:
 	unsigned int interval;
 };
 
-typedef list<cinterval_info>::iterator cinterval_info_iterator;
+typedef std::list<cinterval_info>::iterator cinterval_info_iterator;
 
 class cinterval_info_list
 {
@@ -40,7 +39,7 @@ private:
 	static bool comp_interval_info(cinterval_info a, cinterval_info b);
 	cinterval_info_iterator find_if(int client_id, bool is_processor);
 
-	list<cinterval_info> m_list;
+	std::list<cinterval_info> m_list;
 
 public:
 	bool add_interval(int client_id, unsigned int interval, bool is_processor);

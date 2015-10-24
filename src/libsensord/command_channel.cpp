@@ -108,7 +108,8 @@ bool command_channel::cmd_get_id(int &client_id)
 	packet->set_cmd(CMD_GET_ID);
 
 	cmd_get_id = (cmd_get_id_t *)packet->data();
-	cmd_get_id->pid = getpid();
+
+	get_proc_name(getpid(), cmd_get_id->name);
 
 	INFO("%s send cmd_get_id()", get_client_name());
 
@@ -480,33 +481,34 @@ bool command_channel::cmd_unregister_events(event_type_vector &event_vec)
 	return true;
 }
 
-bool command_channel::cmd_set_interval(unsigned int interval)
+bool command_channel::cmd_set_batch(unsigned int interval, unsigned int latency)
 {
 	cpacket *packet;
-	cmd_set_interval_t *cmd_set_interval;
+	cmd_set_batch_t *cmd_set_batch;
 	cmd_done_t *cmd_done;
 
-	packet = new(std::nothrow) cpacket(sizeof(cmd_set_interval_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_set_batch_t));
 	retvm_if(!packet, false, "Failed to allocate memory");
 
-	packet->set_cmd(CMD_SET_INTERVAL);
+	packet->set_cmd(CMD_SET_BATCH);
 
-	cmd_set_interval = (cmd_set_interval_t*)packet->data();
-	cmd_set_interval->interval = interval;
+	cmd_set_batch = (cmd_set_batch_t*)packet->data();
+	cmd_set_batch->interval = interval;
+	cmd_set_batch->latency = latency;
 
-	INFO("%s send cmd_set_interval(client_id=%d, %s, interval=%d)",
-		get_client_name(), m_client_id, get_sensor_name(m_sensor_id), interval);
+	INFO("%s send cmd_set_batch(client_id=%d, %s, interval=%d, latency = %d)",
+		get_client_name(), m_client_id, get_sensor_name(m_sensor_id), interval, latency);
 
 	if (!command_handler(packet, (void **)&cmd_done)) {
-		ERR("%s failed to send/receive command for sensor[%s] with client_id [%d], interval[%d]",
-			get_client_name(), get_sensor_name(m_sensor_id), m_client_id, interval);
+		ERR("%s failed to send/receive command for sensor[%s] with client_id [%d], interval[%d], latency[%d]",
+			get_client_name(), get_sensor_name(m_sensor_id), m_client_id, interval, latency);
 		delete packet;
 		return false;
 	}
 
 	if (cmd_done->value < 0) {
-		ERR("%s got error[%d] from server for sensor[%s] with client_id [%d], interval[%d]",
-			get_client_name(), cmd_done->value, get_sensor_name(m_sensor_id), m_client_id, interval);
+		ERR("%s got error[%d] from server for sensor[%s] with client_id [%d], interval[%d], latency[%d]",
+			get_client_name(), cmd_done->value, get_sensor_name(m_sensor_id), m_client_id, interval, latency);
 
 		delete[] (char *)cmd_done;
 		delete packet;
@@ -519,17 +521,17 @@ bool command_channel::cmd_set_interval(unsigned int interval)
 	return true;
 }
 
-bool command_channel::cmd_unset_interval(void)
+bool command_channel::cmd_unset_batch(void)
 {
 	cpacket *packet;
 	cmd_done_t *cmd_done;
 
-	packet = new(std::nothrow) cpacket(sizeof(cmd_unset_interval_t));
+	packet = new(std::nothrow) cpacket(sizeof(cmd_unset_batch_t));
 	retvm_if(!packet, false, "Failed to allocate memory");
 
-	packet->set_cmd(CMD_UNSET_INTERVAL);
+	packet->set_cmd(CMD_UNSET_BATCH);
 
-	INFO("%s send cmd_unset_interval(client_id=%d, %s)",
+	INFO("%s send cmd_unset_batch(client_id=%d, %s)",
 		get_client_name(), m_client_id, get_sensor_name(m_sensor_id));
 
 	if (!command_handler(packet, (void **)&cmd_done)) {

@@ -31,6 +31,9 @@
 #include <sensor_plugin_loader.h>
 #include <cvirtual_sensor_config.h>
 
+using std::string;
+using std::vector;
+
 #define SENSOR_NAME "LINEAR_ACCEL_SENSOR"
 #define SENSOR_TYPE_LINEAR_ACCEL	"LINEAR_ACCEL"
 
@@ -140,9 +143,9 @@ bool linear_accel_sensor::init()
 	return true;
 }
 
-sensor_type_t linear_accel_sensor::get_type(void)
+void linear_accel_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return LINEAR_ACCEL_SENSOR;
+	types.push_back(LINEAR_ACCEL_SENSOR);
 }
 
 bool linear_accel_sensor::on_start(void)
@@ -265,9 +268,9 @@ int linear_accel_sensor::get_sensor_data(const unsigned int event_type, sensor_d
 	return 0;
 }
 
-bool linear_accel_sensor::get_properties(sensor_properties_t &properties)
+bool linear_accel_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
-	m_accel_sensor->get_properties(properties);
+	m_accel_sensor->get_properties(ACCELEROMETER_SENSOR, properties);
 	properties.name = "Linear Acceleration Sensor";
 	properties.vendor = m_vendor;
 	properties.resolution = 0.000001;

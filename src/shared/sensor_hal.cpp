@@ -25,6 +25,7 @@
 using std::ifstream;
 using std::ofstream;
 using std::fstream;
+using std::string;
 
 cmutex sensor_hal::m_shared_mutex;
 

@@ -21,17 +21,14 @@
 #define _CONTEXT_SENSOR_HAL_H_
 
 #include <sensor_hal.h>
-#include <string>
-
-using std::string;
 
 class context_sensor_hal : public sensor_hal
 {
 public:
 	context_sensor_hal();
 	virtual ~context_sensor_hal();
-	string get_model_id(void);
-	sensor_type_t get_type(void);
+	std::string get_model_id(void);
+	sensor_hal_type_t get_type(void);
 	bool enable(void);
 	bool disable(void);
 	bool is_data_ready(bool wait);

@@ -31,12 +31,12 @@ public:
 
 	bool init(void);
 
-	void synthesize(const sensor_event_t &event, vector<sensor_event_t> &outs);
+	void synthesize(const sensor_event_t &event, std::vector<sensor_event_t> &outs);
 
 	bool add_interval(int client_id, unsigned int interval, bool is_processor);
 	bool delete_interval(int client_id, bool is_processor);
-	bool get_properties(sensor_properties_t &properties);
-	sensor_type_t get_type(void);
+	virtual bool get_properties(sensor_type_t sensor_type, sensor_properties_t &properties);
+	virtual void get_types(std::vector<sensor_type_t> &types);
 
 	int get_sensor_data(const unsigned int data_id, sensor_data_t &data);
 
@@ -48,6 +48,10 @@ private:
 	sensor_data<float> m_accel;
 	sensor_data<float> m_gyro;
 	sensor_data<float> m_magnetic;
+
+	sensor_data<float> *m_accel_ptr;
+	sensor_data<float> *m_gyro_ptr;
+	sensor_data<float> *m_magnetic_ptr;
 
 	cmutex m_value_mutex;
 
@@ -63,8 +67,8 @@ private:
 	unsigned long long m_time;
 	unsigned int m_interval;
 
-	string m_vendor;
-	string m_raw_data_unit;
+	std::string m_vendor;
+	std::string m_raw_data_unit;
 	int m_default_sampling_time;
 	float m_accel_static_bias[3];
 	float m_gyro_static_bias[3];

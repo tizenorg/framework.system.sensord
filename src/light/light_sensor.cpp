@@ -21,7 +21,10 @@
 #include <sf_common.h>
 #include <light_sensor.h>
 #include <sensor_plugin_loader.h>
-#include <algorithm>
+#include <string>
+
+using std::string;
+using std::vector;
 
 #define SENSOR_NAME "LIGHT_SENSOR"
 
@@ -47,7 +50,7 @@ light_sensor::~light_sensor()
 
 bool light_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(LIGHT_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_LIGHT);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -59,9 +62,9 @@ bool light_sensor::init()
 	return true;
 }
 
-sensor_type_t light_sensor::get_type(void)
+void light_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return LIGHT_SENSOR;
+	types.push_back(LIGHT_SENSOR);
 }
 
 bool light_sensor::working(void *inst)
@@ -146,7 +149,7 @@ bool light_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool light_sensor::get_properties(sensor_properties_t &properties)
+bool light_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	m_sensor_hal->get_properties(properties);
 	return true;

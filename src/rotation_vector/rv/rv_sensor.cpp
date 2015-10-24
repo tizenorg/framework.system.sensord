@@ -32,6 +32,9 @@
 #include <orientation_filter.h>
 #include <cvirtual_sensor_config.h>
 
+using std::string;
+using std::vector;
+
 #define SENSOR_NAME "RV_SENSOR"
 #define SENSOR_TYPE_RV		"ROTATION_VECTOR"
 
@@ -170,6 +173,8 @@ rv_sensor::rv_sensor()
 
 	m_interval = m_default_sampling_time * MS_TO_US;
 
+	m_accel_ptr = m_gyro_ptr = m_magnetic_ptr = NULL;
+
 }
 
 rv_sensor::~rv_sensor()
@@ -194,9 +199,9 @@ bool rv_sensor::init()
 	return true;
 }
 
-sensor_type_t rv_sensor::get_type(void)
+void rv_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return ROTATION_VECTOR_SENSOR;
+	types.push_back(ROTATION_VECTOR_SENSOR);
 }
 
 bool rv_sensor::on_start(void)
@@ -265,6 +270,8 @@ void rv_sensor::synthesize(const sensor_event_t& event, vector<sensor_event_t> &
 
 		m_accel.m_time_stamp = event.data.timestamp;
 
+		m_accel_ptr = &m_accel;
+
 		m_enable_orientation |= ACCELEROMETER_ENABLED;
 	}
 	else if (event.event_type == GYROSCOPE_EVENT_RAW_DATA_REPORT_ON_TIME) {
@@ -277,6 +284,8 @@ void rv_sensor::synthesize(const sensor_event_t& event, vector<sensor_event_t> &
 
 		m_gyro.m_time_stamp = event.data.timestamp;
 
+		m_gyro_ptr = &m_gyro;
+
 		m_enable_orientation |= GYROSCOPE_ENABLED;
 	}
 	else if (event.event_type == GEOMAGNETIC_EVENT_RAW_DATA_REPORT_ON_TIME) {
@@ -288,6 +297,8 @@ void rv_sensor::synthesize(const sensor_event_t& event, vector<sensor_event_t> &
 		pre_process_data(m_magnetic, event.data.values, m_geomagnetic_static_bias, m_geomagnetic_rotation_direction_compensation, m_geomagnetic_scale);
 
 		m_magnetic.m_time_stamp = event.data.timestamp;
+
+		m_magnetic_ptr = &m_magnetic;
 
 		m_enable_orientation |= GEOMAGNETIC_ENABLED;
 	}
@@ -302,7 +313,7 @@ void rv_sensor::synthesize(const sensor_event_t& event, vector<sensor_event_t> &
 
 		{
 			AUTOLOCK(m_fusion_mutex);
-			quaternion_orientation = m_orientation.get_quaternion(m_accel, m_gyro, m_magnetic);
+			quaternion_orientation = m_orientation.get_quaternion(m_accel_ptr, m_gyro_ptr, m_magnetic_ptr);
 		}
 
 		rv_event.sensor_id = get_id();
@@ -314,6 +325,8 @@ void rv_sensor::synthesize(const sensor_event_t& event, vector<sensor_event_t> &
 		rv_event.data.values[1] = quaternion_orientation.m_quat.m_vec[2];
 		rv_event.data.values[2] = quaternion_orientation.m_quat.m_vec[3];
 		rv_event.data.values[3] = quaternion_orientation.m_quat.m_vec[0];
+
+		m_accel_ptr = m_gyro_ptr = m_magnetic_ptr = NULL;
 
 		push(rv_event);
 
@@ -348,7 +361,7 @@ int rv_sensor::get_sensor_data(unsigned int data_id, sensor_data_t &data)
 	return 0;
 }
 
-bool rv_sensor::get_properties(sensor_properties_t &properties)
+bool rv_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	properties.vendor = m_vendor;
 	properties.name = SENSOR_NAME;

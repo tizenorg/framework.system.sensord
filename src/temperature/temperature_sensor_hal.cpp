@@ -23,6 +23,8 @@
 #include <temperature_sensor_hal.h>
 #include <sys/ioctl.h>
 
+using std::string;
+
 #define SENSOR_TYPE_TEMPERATURE		"TEMPERATURE"
 #define ELEMENT_NAME				"NAME"
 #define ELEMENT_VENDOR				"VENDOR"
@@ -114,9 +116,9 @@ string temperature_sensor_hal::get_model_id(void)
 	return m_model_id;
 }
 
-sensor_type_t temperature_sensor_hal::get_type(void)
+sensor_hal_type_t temperature_sensor_hal::get_type(void)
 {
-	return TEMPERATURE_SENSOR;
+	return SENSOR_HAL_TYPE_TEMPERATURE;
 }
 
 bool temperature_sensor_hal::enable(void)

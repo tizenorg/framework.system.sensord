@@ -103,7 +103,9 @@ static void on_name_lost(GDBusConnection *conn,
 
 void init_dbus(void)
 {
+#if !GLIB_CHECK_VERSION(2, 36, 0)
 	g_type_init();
+#endif
 
 	introspection_data = g_dbus_node_info_new_for_xml(introspection_xml, NULL);
 	if (introspection_data == NULL) {

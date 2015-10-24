@@ -25,6 +25,8 @@
 
 #include <algorithm>
 
+using std::string;
+using std::vector;
 using std::equal;
 
 #define SENSOR_NAME "CONTEXT_SENSOR"
@@ -53,7 +55,7 @@ context_sensor::~context_sensor()
 
 bool context_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(CONTEXT_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_CONTEXT);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -70,9 +72,9 @@ bool context_sensor::init()
 	return true;
 }
 
-sensor_type_t context_sensor::get_type(void)
+void context_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return CONTEXT_SENSOR;
+	types.push_back(CONTEXT_SENSOR);
 }
 
 bool context_sensor::working(void *inst)
@@ -138,7 +140,7 @@ bool context_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool context_sensor::get_properties(sensor_properties_t &properties)
+bool context_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }
@@ -231,7 +233,10 @@ bool context_sensor::start_listen_display_state()
 {
 	GError *error = NULL;
 
+#if !GLIB_CHECK_VERSION(2, 36, 0)
 	g_type_init();
+#endif
+
 	m_dbus_conn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &error);
 	if (!m_dbus_conn) {
 		ERR("Error creating dbus connection: %s\n", error->message);

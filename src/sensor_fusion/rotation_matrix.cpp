@@ -97,44 +97,22 @@ template <typename T>
 quaternion<T> rot_mat2quat(rotation_matrix<T> rm)
 {
 	T q0, q1, q2, q3;
+	T phi, theta, psi;
 
-	T diag_sum = rm.m_rot_mat.m_mat[0][0] + rm.m_rot_mat.m_mat[1][1] + rm.m_rot_mat.m_mat[2][2];
+	phi = atan2(rm.m_rot_mat.m_mat[2][1], rm.m_rot_mat.m_mat[2][2]);
+	theta = atan2(-rm.m_rot_mat.m_mat[2][0],
+			sqrt((rm.m_rot_mat.m_mat[2][1] * rm.m_rot_mat.m_mat[2][1]) +
+					(rm.m_rot_mat.m_mat[2][2] * rm.m_rot_mat.m_mat[2][2])));
+	psi = atan2(rm.m_rot_mat.m_mat[1][0], rm.m_rot_mat.m_mat[0][0]);
 
-	if ( diag_sum > 0 )
-	{
-		T val = (T) 0.5 / sqrt(diag_sum + (T) 1.0);
-		q0 = (T) 0.25 / val;
-		q1 = ( rm.m_rot_mat.m_mat[2][1] - rm.m_rot_mat.m_mat[1][2] ) * val;
-		q2 = ( rm.m_rot_mat.m_mat[0][2] - rm.m_rot_mat.m_mat[2][0] ) * val;
-		q3 = ( rm.m_rot_mat.m_mat[1][0] - rm.m_rot_mat.m_mat[0][1] ) * val;
-	}
-	else
-	{
-		if ( rm.m_rot_mat.m_mat[0][0] > rm.m_rot_mat.m_mat[1][1] && rm.m_rot_mat.m_mat[0][0] > rm.m_rot_mat.m_mat[2][2] )
-		{
-			T val = (T) 2.0 * sqrt( 1.0 + rm.m_rot_mat.m_mat[0][0] - rm.m_rot_mat.m_mat[1][1] - rm.m_rot_mat.m_mat[2][2]);
-			q0 = (rm.m_rot_mat.m_mat[2][1] - rm.m_rot_mat.m_mat[1][2] ) / val;
-			q1 = (T) 0.25 * val;
-			q2 = (rm.m_rot_mat.m_mat[0][1] + rm.m_rot_mat.m_mat[1][0] ) / val;
-			q3 = (rm.m_rot_mat.m_mat[0][2] + rm.m_rot_mat.m_mat[2][0] ) / val;
-		}
-		else if (rm.m_rot_mat.m_mat[1][1] > rm.m_rot_mat.m_mat[2][2])
-		{
-			T val = (T) 2.0 * sqrt( 1.0 + rm.m_rot_mat.m_mat[1][1] - rm.m_rot_mat.m_mat[0][0] - rm.m_rot_mat.m_mat[2][2]);
-			q0 = (rm.m_rot_mat.m_mat[0][2] - rm.m_rot_mat.m_mat[2][0] ) / val;
-			q1 = (rm.m_rot_mat.m_mat[0][1] + rm.m_rot_mat.m_mat[1][0] ) / val;
-			q2 = (T) 0.25 * val;
-			q3 = (rm.m_rot_mat.m_mat[1][2] + rm.m_rot_mat.m_mat[2][1] ) / val;
-		}
-		else
-		{
-			T val = (T) 2.0 * sqrt( 1.0 + rm.m_rot_mat.m_mat[2][2] - rm.m_rot_mat.m_mat[0][0] - rm.m_rot_mat.m_mat[1][1] );
-			q0 = (rm.m_rot_mat.m_mat[1][0] - rm.m_rot_mat.m_mat[0][1] ) / val;
-			q1 = (rm.m_rot_mat.m_mat[0][2] + rm.m_rot_mat.m_mat[2][0] ) / val;
-			q2 = (rm.m_rot_mat.m_mat[1][2] + rm.m_rot_mat.m_mat[2][1] ) / val;
-			q3 = (T) 0.25 * val;
-		}
-	}
+	q0 = (cos(phi/2) * cos(theta/2) * cos(psi/2)) +
+			(sin(phi/2) * sin(theta/2) * sin(psi/2));
+	q1 = (-cos(phi/2) * sin(theta/2) * sin(psi/2)) +
+			(sin(phi/2) * cos(theta/2) * cos(psi/2));
+	q2 = (cos(phi/2) * sin(theta/2) * cos(psi/2)) +
+			(sin(phi/2) * cos(theta/2) * sin(psi/2));
+	q3 = (cos(phi/2) * cos(theta/2) * sin(psi/2)) -
+			(sin(phi/2) * sin(theta/2) * cos(psi/2));
 
 	quaternion<T> q(q0, q1, q2, q3);
 

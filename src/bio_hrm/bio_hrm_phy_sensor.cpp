@@ -23,6 +23,8 @@
 #include <bio_hrm_phy_sensor.h>
 #include <sensor_plugin_loader.h>
 
+using std::string;
+using std::vector;
 
 #define SENSOR_NAME "BIO_HRM_SENSOR"
 
@@ -44,7 +46,7 @@ bio_hrm_phy_sensor::~bio_hrm_phy_sensor()
 
 bool bio_hrm_phy_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(BIO_HRM_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_BIO_HRM);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -67,9 +69,9 @@ bool bio_hrm_phy_sensor::init()
 	return true;
 }
 
-sensor_type_t bio_hrm_phy_sensor::get_type(void)
+void bio_hrm_phy_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return BIO_HRM_SENSOR;
+	types.push_back(BIO_HRM_SENSOR);
 }
 
 bool bio_hrm_phy_sensor::working(void *inst)
@@ -119,7 +121,7 @@ bool bio_hrm_phy_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool bio_hrm_phy_sensor::get_properties(sensor_properties_t &properties)
+bool bio_hrm_phy_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }
@@ -154,8 +156,6 @@ void bio_hrm_phy_sensor::raw_to_base(sensor_data_t &data)
 {
 	data.value_count = 3;
 	data.values[0] = data.values[0] * m_raw_data_unit;
-	data.values[1] = data.values[1];
-	data.values[2] = data.values[2];
 }
 
 extern "C" sensor_module* create(void)

@@ -23,9 +23,6 @@
 #include <sensor_internal.h>
 #include <cpacket.h>
 #include <csocket.h>
-#include <vector>
-
-using std::vector;
 
 class command_channel
 {
@@ -48,8 +45,8 @@ public:
 	bool cmd_register_events(event_type_vector &event_vec);
 	bool cmd_unregister_event(unsigned int event_type);
 	bool cmd_unregister_events(event_type_vector &event_vec);
-	bool cmd_set_interval(unsigned int interval);
-	bool cmd_unset_interval(void);
+	bool cmd_set_batch(unsigned int interval, unsigned int latency);
+	bool cmd_unset_batch(void);
 	bool cmd_set_command(unsigned int cmd, long value);
 	bool cmd_get_data(unsigned int type, sensor_data_t* values);
 	bool cmd_send_sensorhub_data(const char* buffer, int data_len);

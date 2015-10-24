@@ -145,4 +145,18 @@ quaternion<T> phase_correction(const quaternion<T> q1, const quaternion<T> q2)
 
 	return q;
 }
+
+template<typename T>
+quaternion<T> axis2quat(const vect<T> axis, const T angle)
+{
+	T w;
+	vect<T> imag(axis.m_size);
+
+	w = cos(angle/2);
+	imag = axis * (T)(-sin(angle/2));
+
+	quaternion<T> q(w, imag.m_vec[0], imag.m_vec[1], imag.m_vec[2]);
+
+	return q;
+}
 #endif  //_QUATERNION_H_

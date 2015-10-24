@@ -32,6 +32,9 @@
 #include <orientation_filter.h>
 #include <cvirtual_sensor_config.h>
 
+using std::string;
+using std::vector;
+
 #define SENSOR_NAME "ORIENTATION_SENSOR"
 #define SENSOR_TYPE_ORIENTATION		"ORIENTATION"
 
@@ -203,6 +206,8 @@ orientation_sensor::orientation_sensor()
 
 	m_interval = m_default_sampling_time * MS_TO_US;
 
+	m_accel_ptr = m_gyro_ptr = m_magnetic_ptr = NULL;
+
 }
 
 orientation_sensor::~orientation_sensor()
@@ -226,9 +231,9 @@ bool orientation_sensor::init(void)
 	return true;
 }
 
-sensor_type_t orientation_sensor::get_type(void)
+void orientation_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return ORIENTATION_SENSOR;
+	types.push_back(ORIENTATION_SENSOR);
 }
 
 bool orientation_sensor::on_start(void)
@@ -298,6 +303,8 @@ void orientation_sensor::synthesize(const sensor_event_t &event, vector<sensor_e
 
 		m_accel.m_time_stamp = event.data.timestamp;
 
+		m_accel_ptr = &m_accel;
+
 		m_enable_orientation |= ACCELEROMETER_ENABLED;
 	}
 	else if (event.event_type == GYROSCOPE_EVENT_RAW_DATA_REPORT_ON_TIME) {
@@ -310,6 +317,8 @@ void orientation_sensor::synthesize(const sensor_event_t &event, vector<sensor_e
 
 		m_gyro.m_time_stamp = event.data.timestamp;
 
+		m_gyro_ptr = &m_gyro;
+
 		m_enable_orientation |= GYROSCOPE_ENABLED;
 	}
 	else if (event.event_type == GEOMAGNETIC_EVENT_RAW_DATA_REPORT_ON_TIME) {
@@ -321,6 +330,8 @@ void orientation_sensor::synthesize(const sensor_event_t &event, vector<sensor_e
 		pre_process_data(m_magnetic, event.data.values, m_geomagnetic_static_bias, m_geomagnetic_rotation_direction_compensation, m_geomagnetic_scale);
 
 		m_magnetic.m_time_stamp = event.data.timestamp;
+
+		m_magnetic_ptr = &m_magnetic;
 
 		m_enable_orientation |= GEOMAGNETIC_ENABLED;
 	}
@@ -335,7 +346,7 @@ void orientation_sensor::synthesize(const sensor_event_t &event, vector<sensor_e
 
 		{
 			AUTOLOCK(m_fusion_mutex);
-			euler_orientation = m_orientation.get_orientation(m_accel, m_gyro, m_magnetic);
+			euler_orientation = m_orientation.get_orientation(m_accel_ptr, m_gyro_ptr, m_magnetic_ptr);
 		}
 
 		if(m_raw_data_unit == "DEGREES") {
@@ -366,6 +377,8 @@ void orientation_sensor::synthesize(const sensor_event_t &event, vector<sensor_e
 			m_roll = orientation_event.data.values[2];
 		}
 
+		m_accel_ptr = m_gyro_ptr = m_magnetic_ptr = NULL;
+
 		push(orientation_event);
 	}
 
@@ -388,7 +401,7 @@ int orientation_sensor::get_sensor_data(const unsigned int event_type, sensor_da
 	return 0;
 }
 
-bool orientation_sensor::get_properties(sensor_properties_t &properties)
+bool orientation_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	if(m_raw_data_unit == "DEGREES") {
 		properties.min_range = -180;

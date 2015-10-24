@@ -22,6 +22,7 @@
 #include <csocket.h>
 
 using std::pair;
+using std::string;
 
 cclient_info_manager::cclient_info_manager()
 {
@@ -35,21 +36,6 @@ cclient_info_manager& cclient_info_manager::get_instance()
 {
 	static cclient_info_manager inst;
 	return inst;
-}
-
-
-unsigned int cclient_info_manager::get_interval(int client_id, sensor_id_t sensor_id)
-{
-	AUTOLOCK(m_mutex);
-
-	auto it_record = m_clients.find(client_id);
-
-	if (it_record == m_clients.end()) {
-		ERR("Client[%d] is not found", client_id);
-		return 0;
-	}
-
-	return it_record->second.get_interval(sensor_id);
 }
 
 bool cclient_info_manager::get_registered_events(int client_id, sensor_id_t sensor_id, event_type_vector &event_vec)
@@ -104,7 +90,7 @@ bool cclient_info_manager::unregister_event(int client_id, sensor_id_t sensor_id
 	return true;
 }
 
-bool cclient_info_manager::set_interval(int client_id, sensor_id_t sensor_id, unsigned int interval)
+bool cclient_info_manager::set_batch(int client_id, sensor_id_t sensor_id, unsigned int interval, unsigned latency)
 {
 	AUTOLOCK(m_mutex);
 
@@ -115,10 +101,21 @@ bool cclient_info_manager::set_interval(int client_id, sensor_id_t sensor_id, un
 		return false;
 	}
 
-	if(!it_record->second.set_interval(sensor_id, interval))
-		return false;
+	return it_record->second.set_batch(sensor_id, interval, latency);
+}
 
-	return true;
+bool cclient_info_manager::get_batch(int client_id, sensor_id_t sensor_id, unsigned int &interval, unsigned int &latency)
+{
+	AUTOLOCK(m_mutex);
+
+	auto it_record = m_clients.find(client_id);
+
+	if (it_record == m_clients.end()) {
+		ERR("Client[%d] is not found", client_id);
+		return false;
+	}
+
+	return it_record->second.get_batch(sensor_id, interval, latency);
 }
 
 bool cclient_info_manager::set_option(int client_id, sensor_id_t sensor_id, int option)
@@ -224,7 +221,7 @@ bool cclient_info_manager::has_client_record(int client_id)
 }
 
 
-void cclient_info_manager::set_client_info(int client_id, pid_t pid)
+void cclient_info_manager::set_client_info(int client_id, pid_t pid, const string &name)
 {
 	AUTOLOCK(m_mutex);
 
@@ -235,7 +232,7 @@ void cclient_info_manager::set_client_info(int client_id, pid_t pid)
 		return;
 	}
 
-	it_record->second.set_client_info(pid);
+	it_record->second.set_client_info(pid, name);
 
 	return;
 }

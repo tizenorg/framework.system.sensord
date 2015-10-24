@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(uncal_geo CXX)
+project(geo_uncal CXX)
 
 # to install pkgconfig setup file.
 SET(EXEC_PREFIX "\${prefix}")
@@ -7,8 +7,8 @@ SET(LIBDIR "\${prefix}/lib")
 SET(INCLUDEDIR "\${prefix}/include")
 SET(VERSION 1.0)
 
-SET(SENSOR_NAME uncal_geo_sensor)
-SET(SENSOR_HAL_NAME uncal_geo_sensor_hal)
+SET(SENSOR_NAME geo_uncal_sensor)
+SET(SENSOR_HAL_NAME geo_uncal_sensor_hal)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src/libsensord)
@@ -37,11 +37,11 @@ add_definitions(-DUSE_DLOG_LOG)
 add_definitions(-Iinclude)
 
 add_library(${SENSOR_NAME} SHARED
-		uncal_geo_sensor.cpp
+	geo_uncal_sensor.cpp
 )
 
 add_library(${SENSOR_HAL_NAME} SHARED
-		uncal_geo_sensor_hal.cpp
+	geo_uncal_sensor_hal.cpp
 )
 
 target_link_libraries(${SENSOR_NAME} ${rpkgs_LDFLAGS} ${GLES_LDFLAGS} "-lm")

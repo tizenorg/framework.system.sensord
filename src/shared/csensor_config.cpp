@@ -24,8 +24,11 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <string>
 
 using std::ifstream;
+using std::string;
+using std::istringstream;
 
 #define ROOT_ELEMENT	"SENSOR"
 #define TEXT_ELEMENT 	"text"

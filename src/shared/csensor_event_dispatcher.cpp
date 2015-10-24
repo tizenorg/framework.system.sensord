@@ -17,13 +17,17 @@
  *
  */
 
+#include <systemd/sd-daemon.h>
 #include <csensor_event_dispatcher.h>
 #include <sensor_plugin_loader.h>
 #include <common.h>
 #include <sf_common.h>
 #include <vconf.h>
 #include <thread>
+#include <vector>
+
 using std::thread;
+using std::vector;
 
 #define MAX_PENDING_CONNECTION 32
 
@@ -41,25 +45,58 @@ csensor_event_dispatcher& csensor_event_dispatcher::get_instance()
 	return inst;
 }
 
+int csensor_event_dispatcher::get_systemd_socket(const char *name)
+{
+	int type = SOCK_SEQPACKET;
+	const int listening = -1;
+	size_t length = 0;
+	int fd = -1;
+
+	if (sd_listen_fds(0) < 0) {
+		ERR("Failed to listen fds from systemd");
+		return -1;
+	}
+
+	fd = SD_LISTEN_FDS_START + 1;
+
+	if (sd_is_socket_unix(fd, type, listening, name, length) > 0)
+		return fd;
+
+	fd = SD_LISTEN_FDS_START + 0;
+
+	if (sd_is_socket_unix(fd, type, listening, name, length) > 0)
+		return fd;
+
+	return -1;
+}
 
 bool csensor_event_dispatcher::run(void)
 {
+	int sock_fd = -1;
 	INFO("Starting Event Dispatcher\n");
 
-	if (!m_accept_socket.create(SOCK_SEQPACKET)) {
-		ERR("Listener Socket Creation failed in Server \n");
-		return false;
-	}
+	sock_fd = get_systemd_socket(EVENT_CHANNEL_PATH);
 
-	if(!m_accept_socket.bind(EVENT_CHANNEL_PATH)) {
-		ERR("Listener Socket Binding failed in Server \n");
-		m_accept_socket.close();
-		return false;
-	}
+	if (sock_fd >= 0) {
+		INFO("Succeeded to get systemd socket(%d)", sock_fd);
+		m_accept_socket = csocket(sock_fd);
+	} else {
+		ERR("Failed to get systemd socket, create it by myself!");
+		if (!m_accept_socket.create(SOCK_SEQPACKET)) {
+			ERR("Listener Socket Creation failed in Server \n");
+			return false;
+		}
 
-	if(!m_accept_socket.listen(MAX_PENDING_CONNECTION)) {
-		ERR("Socket Listen failed in Server \n");
-		return false;
+		if(!m_accept_socket.bind(EVENT_CHANNEL_PATH)) {
+			ERR("Listener Socket Binding failed in Server \n");
+			m_accept_socket.close();
+			return false;
+		}
+
+		if(!m_accept_socket.listen(MAX_PENDING_CONNECTION)) {
+			ERR("Socket Listen failed in Server \n");
+			return false;
+		}
 	}
 
 	thread accepter(&csensor_event_dispatcher::accept_connections, this);
@@ -180,7 +217,7 @@ void csensor_event_dispatcher::dispatch_event(void)
 
 			sort_sensor_events(sensor_events, event_cnt);
 
-			for (int i = 0; i < event_cnt; ++i) {
+			for (unsigned int i = 0; i < event_cnt; ++i) {
 				if (is_record_event(sensor_events[i].event_type))
 					put_last_event(sensor_events[i].event_type, sensor_events[i]);
 			}
@@ -198,8 +235,8 @@ void csensor_event_dispatcher::dispatch_event(void)
 
 void csensor_event_dispatcher::send_sensor_events(void* events, int event_cnt, bool is_hub_event)
 {
-	sensor_event_t *sensor_events;
-	sensorhub_event_t *sensor_hub_events;
+	sensor_event_t *sensor_events = NULL;
+	sensorhub_event_t *sensor_hub_events = NULL;
 	cclient_info_manager& client_info_manager = get_client_info_manager();
 
 	const int RESERVED_CLIENT_CNT = 20;

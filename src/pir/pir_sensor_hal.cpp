@@ -23,6 +23,8 @@
 #include <pir_sensor_hal.h>
 #include <sys/ioctl.h>
 
+using std::string;
+
 #define SENSOR_TYPE_PIR			"PIR"
 #define ELEMENT_NAME 			"NAME"
 #define ELEMENT_VENDOR			"VENDOR"
@@ -103,9 +105,9 @@ string pir_sensor_hal::get_model_id(void)
 	return m_model_id;
 }
 
-sensor_type_t pir_sensor_hal::get_type(void)
+sensor_hal_type_t pir_sensor_hal::get_type(void)
 {
-	return PIR_SENSOR;
+	return SENSOR_HAL_TYPE_PIR;
 }
 
 bool pir_sensor_hal::enable(void)

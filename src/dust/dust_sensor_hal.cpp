@@ -24,6 +24,7 @@
 #include <sys/ioctl.h>
 
 using std::ifstream;
+using std::string;
 
 #define SENSOR_TYPE_DUST        "DUST"
 #define ELEMENT_NAME            "NAME"
@@ -130,9 +131,9 @@ string dust_sensor_hal::get_model_id(void)
 	return m_model_id;
 }
 
-sensor_type_t dust_sensor_hal::get_type(void)
+sensor_hal_type_t dust_sensor_hal::get_type(void)
 {
-	return DUST_SENSOR;
+	return SENSOR_HAL_TYPE_DUST;
 }
 
 bool dust_sensor_hal::enable(void)

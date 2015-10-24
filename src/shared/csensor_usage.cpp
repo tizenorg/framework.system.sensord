@@ -23,6 +23,7 @@
 
 csensor_usage::csensor_usage()
 : m_interval(POLL_MAX_HZ_MS)
+, m_latency(0)
 , m_option(SENSOR_OPTION_DEFAULT)
 , m_start(false)
 {

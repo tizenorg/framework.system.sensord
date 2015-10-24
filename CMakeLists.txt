@@ -34,6 +34,13 @@ INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE DESTINATION share/license RENA
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE DESTINATION share/license RENAME libsensord)
 
 INSTALL(FILES sensord.efl DESTINATION /etc/smack/accesses.d)
+IF("${TIZEN_ZONE_ENABLED}" STREQUAL "ON")
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/packaging/sensord.res DESTINATION /etc/vasum/vsmzone.resource)
+ENDIF()
 
 # Sub-directory
 add_subdirectory(src)
+
+IF("${TEST_SUITE}" STREQUAL "ON")
+add_subdirectory(test)
+ENDIF()

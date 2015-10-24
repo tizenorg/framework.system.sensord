@@ -23,13 +23,13 @@
 #include <sf_common.h>
 #include <algorithm>
 #include <vector>
-using std::vector;
 
-typedef vector<unsigned int> reg_event_vector;
+typedef std::vector<unsigned int> reg_event_vector;
 
 class csensor_usage {
 public:
 	unsigned int m_interval;
+	unsigned int m_latency;
 	int m_option;
 	reg_event_vector m_reg_events;
 	bool m_start;

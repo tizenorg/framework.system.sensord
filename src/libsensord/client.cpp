@@ -27,6 +27,10 @@
 #include <common.h>
 #include <sensor_info.h>
 #include <sensor_info_manager.h>
+#include <vector>
+#include <algorithm>
+
+using std::vector;
 
 #ifndef API
 #define API __attribute__((visibility("default")))
@@ -268,19 +272,9 @@ static bool change_sensor_rep(sensor_id_t sensor_id, sensor_rep &prev_rep, senso
 			}
 		}
 
-		if (prev_rep.interval != cur_rep.interval) {
-			unsigned int min_interval;
-
-			if (cur_rep.interval == 0)
-				min_interval= POLL_MAX_HZ_MS;
-			else
-				min_interval = cur_rep.interval;
-
-			if (cur_rep.event_types.empty())
-				min_interval = POLL_10HZ_MS;
-
-			if (!cmd_channel->cmd_set_interval(min_interval)) {
-				ERR("Sending cmd_set_interval(%d, %s, %d) failed for %s", client_id, get_sensor_name(sensor_id), min_interval, get_client_name());
+		if ( (prev_rep.interval != cur_rep.interval) || (prev_rep.latency != cur_rep.latency)) {
+			if (!cmd_channel->cmd_set_batch(cur_rep.interval, cur_rep.latency)) {
+				ERR("Sending cmd_set_batch(%d, %s, %d, %d) failed for %s", client_id, get_sensor_name(sensor_id), cur_rep.interval, cur_rep.latency, get_client_name());
 				return false;
 			}
 		}
@@ -308,7 +302,7 @@ static bool change_sensor_rep(sensor_id_t sensor_id, sensor_rep &prev_rep, senso
 				return false;
 			}
 		} else {
-			if (!cmd_channel->cmd_unset_interval()) {
+			if (!cmd_channel->cmd_unset_batch()) {
 				ERR("Sending cmd_unset_interval(%d, %s) failed for %s", client_id, get_sensor_name(sensor_id), get_client_name());
 				return false;
 			}
@@ -427,7 +421,7 @@ API bool sensord_get_sensor_list(sensor_type_t type, sensor_t **list, int *senso
 		retvm_if(!*list, false, "Failed to allocate memory");
 	}
 
-	for (int i = 0; i < sensor_infos.size(); ++i)
+	for (unsigned int i = 0; i < sensor_infos.size(); ++i)
 		*(*list + i) = sensor_info_to_sensor(sensor_infos[i]);
 
 	*sensor_count = sensor_infos.size();
@@ -437,7 +431,7 @@ API bool sensord_get_sensor_list(sensor_type_t type, sensor_t **list, int *senso
 
 API sensor_t sensord_get_sensor(sensor_type_t type)
 {
-	retvm_if (!get_sensor_list(), false, "Fail to get sensor list from server");
+	retvm_if (!get_sensor_list(), NULL, "Fail to get sensor list from server");
 
 	const sensor_info *info;
 
@@ -606,14 +600,14 @@ API int sensord_connect(sensor_t sensor)
 	retvm_if (!sensor_info_manager::get_instance().is_valid(info),
 		OP_ERROR, "Invalid param: sensor (%p)", sensor);
 
-	sensor_id_t sensor_id =  info->get_id();
+	sensor_id_t sensor_id = info->get_id();
 
 	AUTOLOCK(lock);
 
 	sensor_registered = event_listener.is_sensor_registered(sensor_id);
 
 	handle = event_listener.create_handle(sensor_id);
-	if (handle == MAX_HANDLE) {
+	if (handle == MAX_HANDLE_REACHED) {
 		ERR("Maximum number of handles reached, sensor: %s in client %s", get_sensor_name(sensor_id), get_client_name());
 		return OP_ERROR;
 	}
@@ -754,11 +748,12 @@ static bool register_event(int handle, unsigned int event_type, unsigned int int
 	if (interval < MIN_INTERVAL)
 		interval = MIN_INTERVAL;
 
-	INFO("%s registers event %s[0x%x] for sensor %s[%d] with interval: %d, cb: 0x%x, user_data: 0x%x", get_client_name(), get_event_name(event_type),
-			event_type, get_sensor_name(sensor_id), handle, interval, cb, user_data);
+	INFO("%s registers event %s[0x%x] for sensor %s[%d] with interval: %d, latency: %d,  cb: 0x%x, user_data: 0x%x",
+		get_client_name(), get_event_name(event_type), event_type, get_sensor_name(sensor_id),
+		handle, interval, max_batch_latency, cb, user_data);
 
 	event_listener.get_sensor_rep(sensor_id, prev_rep);
-	event_listener.register_event(handle, event_type, interval, cb_type, cb, user_data);
+	event_listener.register_event(handle, event_type, interval, max_batch_latency, cb_type, cb, user_data);
 	event_listener.get_sensor_rep(sensor_id, cur_rep);
 	ret = change_sensor_rep(sensor_id, prev_rep, cur_rep);
 
@@ -784,7 +779,7 @@ API bool sensord_unregister_event(int handle, unsigned int event_type)
 	sensor_id_t sensor_id;
 	sensor_rep prev_rep, cur_rep;
 	bool ret;
-	unsigned int prev_interval;
+	unsigned int prev_interval, prev_latency;
 	int prev_cb_type;
 	void *prev_cb;
 	void *prev_user_data;
@@ -800,7 +795,7 @@ API bool sensord_unregister_event(int handle, unsigned int event_type)
 		event_type, get_sensor_name(sensor_id), handle);
 
 	event_listener.get_sensor_rep(sensor_id, prev_rep);
-	event_listener.get_event_info(handle, event_type, prev_interval, prev_cb_type, prev_cb, prev_user_data);
+	event_listener.get_event_info(handle, event_type, prev_interval, prev_latency, prev_cb_type, prev_cb, prev_user_data);
 
 	if (!event_listener.unregister_event(handle, event_type)) {
 		ERR("%s try to unregister non registered event %s[0x%x] for sensor %s[%d]",
@@ -812,7 +807,7 @@ API bool sensord_unregister_event(int handle, unsigned int event_type)
 	ret =  change_sensor_rep(sensor_id, prev_rep, cur_rep);
 
 	if (!ret)
-		event_listener.register_event(handle, event_type, prev_interval, prev_cb_type, prev_cb, prev_user_data);
+		event_listener.register_event(handle, event_type, prev_interval, prev_latency, prev_cb_type, prev_cb, prev_user_data);
 
 	return ret;
 
@@ -938,16 +933,15 @@ API bool sensord_stop(int handle)
 }
 
 
-API bool sensord_change_event_interval(int handle, unsigned int event_type, unsigned int interval)
+static bool change_event_batch(int handle, unsigned int event_type, unsigned int interval, unsigned int latency)
 {
 	sensor_id_t sensor_id;
 	sensor_rep prev_rep, cur_rep;
 	bool ret;
-	unsigned int prev_interval;
+	unsigned int prev_interval, prev_latency;
 	int prev_cb_type;
 	void *prev_cb;
 	void *prev_user_data;
-	unsigned int _interval;
 
 	AUTOLOCK(lock);
 
@@ -956,17 +950,20 @@ API bool sensord_change_event_interval(int handle, unsigned int event_type, unsi
 		return false;
 	}
 
-	INFO("%s changes interval of event %s[0x%x] for %s[%d] to interval %d", get_client_name(), get_event_name(event_type),
-			event_type, get_sensor_name(sensor_id), handle, interval);
+	if (interval == 0)
+		interval = 1;
+
+	INFO("%s changes batch of event %s[0x%x] for %s[%d] to (%d, %d)", get_client_name(), get_event_name(event_type),
+			event_type, get_sensor_name(sensor_id), handle, interval, latency);
 
 	event_listener.get_sensor_rep(sensor_id, prev_rep);
 
-	event_listener.get_event_info(handle, event_type, prev_interval, prev_cb_type, prev_cb, prev_user_data);
+	event_listener.get_event_info(handle, event_type, prev_interval, prev_latency, prev_cb_type, prev_cb, prev_user_data);
 
 	if (interval < MIN_INTERVAL)
 		interval = MIN_INTERVAL;
 
-	if (!event_listener.set_event_interval(handle, event_type, interval))
+	if (!event_listener.set_event_batch(handle, event_type, interval, latency))
 		return false;
 
 	event_listener.get_sensor_rep(sensor_id, cur_rep);
@@ -974,17 +971,45 @@ API bool sensord_change_event_interval(int handle, unsigned int event_type, unsi
 	ret = change_sensor_rep(sensor_id, prev_rep, cur_rep);
 
 	if (!ret)
-		event_listener.set_event_interval(handle, event_type, prev_interval);
+		event_listener.set_event_batch(handle, event_type, prev_interval, prev_latency);
 
 	return ret;
-
 }
 
-API bool sensord_change_event_max_batch_latency(int handle, unsigned int max_batch_latency)
+API bool sensord_change_event_interval(int handle, unsigned int event_type, unsigned int interval)
 {
-	return false;
+	unsigned int prev_interval, prev_latency;
+	int prev_cb_type;
+	void *prev_cb;
+	void *prev_user_data;
+
+	AUTOLOCK(lock);
+
+	if (!event_listener.get_event_info(handle, event_type, prev_interval, prev_latency, prev_cb_type, prev_cb, prev_user_data)) {
+		ERR("Failed to get event info with handle = %d, event_type = 0x%x", handle, event_type);
+		return false;
+	}
+
+	INFO("handle = %d, event_type = 0x%x, interval = %d, prev_latency = %d", handle, event_type, interval, prev_latency);
+	return change_event_batch(handle, event_type, interval, prev_latency);
 }
 
+API bool sensord_change_event_max_batch_latency(int handle, unsigned int event_type, unsigned int max_batch_latency)
+{
+	unsigned int prev_interval, prev_latency;
+	int prev_cb_type;
+	void *prev_cb;
+	void *prev_user_data;
+
+	AUTOLOCK(lock);
+
+	if (!event_listener.get_event_info(handle, event_type, prev_interval, prev_latency, prev_cb_type, prev_cb, prev_user_data)) {
+		ERR("Failed to get event info with handle = %d, event_type = 0x%x", handle, event_type);
+		return false;
+	}
+
+	return change_event_batch(handle, event_type, prev_interval, max_batch_latency);
+}
 
 API bool sensord_set_option(int handle, int option)
 {

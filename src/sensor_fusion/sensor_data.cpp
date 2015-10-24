@@ -104,5 +104,17 @@ sensor_data<T> scale_data(sensor_data<T> data, T scaling_factor)
 	return s;
 }
 
+template<typename T>
+quaternion<T> sensor_data2quat(const sensor_data<T> data, const vect<T> ref_vec)
+{
+	vect<T> axis(ref_vec.m_size);
+	T angle;
+
+	axis = cross(data.m_data, ref_vec);
+	angle = acos(dot(data.m_data, ref_vec));
+
+	return axis2quat(axis, angle);
+}
+
 #endif /* _SENSOR_DATA_H_ */
 

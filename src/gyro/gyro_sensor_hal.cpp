@@ -25,6 +25,7 @@
 #include <poll.h>
 
 using std::ifstream;
+using std::string;
 
 #define DPS_TO_MDPS 1000
 #define MIN_RANGE(RES) (-((1 << (RES))/2))
@@ -136,9 +137,9 @@ string gyro_sensor_hal::get_model_id(void)
 	return m_model_id;
 }
 
-sensor_type_t gyro_sensor_hal::get_type(void)
+sensor_hal_type_t gyro_sensor_hal::get_type(void)
 {
-	return GYROSCOPE_SENSOR;
+	return SENSOR_HAL_TYPE_GYROSCOPE;
 }
 
 bool gyro_sensor_hal::enable(void)

@@ -26,6 +26,7 @@
 #include <sys/ioctl.h>
 #include <fstream>
 
+using std::string;
 using std::ifstream;
 
 #define SENSORHUB_ID_SENSOR 			(0)
@@ -139,9 +140,9 @@ string context_sensor_hal::get_model_id(void)
 	return SSP_INPUT_NODE_NAME;
 }
 
-sensor_type_t context_sensor_hal::get_type(void)
+sensor_hal_type_t context_sensor_hal::get_type(void)
 {
-	return CONTEXT_SENSOR;
+	return SENSOR_HAL_TYPE_CONTEXT;
 }
 
 bool context_sensor_hal::enable(void)

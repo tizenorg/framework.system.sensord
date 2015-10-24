@@ -20,7 +20,7 @@
 #include <csocket.h>
 #include <attr/xattr.h>
 #include <sys/stat.h>
-
+#include <stdint.h>
 
 csocket::csocket()
 : m_sock_fd(-1)
@@ -80,22 +80,6 @@ bool csocket::bind (const char *sock_path)
 	if (!is_valid()) {
 		ERR("%s's socket is invalid", get_client_name());
 		return false;
-	}
-
-	if((fsetxattr(m_sock_fd, "security.SMACK64IPOUT", "@", 2, 0)) < 0) {
-		if(errno != EOPNOTSUPP) {
-			close();
-			ERR("security.SMACK64IPOUT error = [%d][%s]\n", errno, strerror(errno) );
-			return false;
-		}
-	}
-
-	if((fsetxattr(m_sock_fd, "security.SMACK64IPIN", "*", 2, 0)) < 0) {
-		if(errno != EOPNOTSUPP)	{
-			close();
-			ERR("security.SMACK64IPIN error  = [%d][%s]\n", errno, strerror(errno) );
-			return false;
-		}
 	}
 
 	if (!access(sock_path, F_OK)) {
@@ -159,7 +143,7 @@ bool csocket::accept(csocket& client_socket) const
 	return true;
 }
 
-ssize_t csocket::send_for_seqpacket(void const* buffer, size_t size) const
+ssize_t csocket::send_for_seqpacket(const void *buffer, size_t size) const
 {
 	ssize_t err, len;
 
@@ -209,14 +193,14 @@ ssize_t csocket::recv_for_seqpacket(void* buffer, size_t size) const
 }
 
 
-ssize_t csocket::send_for_stream(void const* buffer, size_t size) const
+ssize_t csocket::send_for_stream(const void *buffer, size_t size) const
 {
 	ssize_t len;
 	ssize_t err = 0;
-	ssize_t total_sent_size = 0;
+	size_t total_sent_size = 0;
 
 	do {
-		len = ::send(m_sock_fd, buffer + total_sent_size, size - total_sent_size, m_send_flags);
+		len = ::send(m_sock_fd, (const void *)((uint8_t *)buffer + total_sent_size), size - total_sent_size, m_send_flags);
 
 		if (len >= 0) {
 			total_sent_size += len;
@@ -240,10 +224,10 @@ ssize_t csocket::recv_for_stream(void* buffer, size_t size) const
 {
 	ssize_t len;
 	ssize_t err = 0;
-	ssize_t total_recv_size = 0;
+	size_t total_recv_size = 0;
 
 	do {
-		len = ::recv(m_sock_fd, buffer + total_recv_size, size - total_recv_size, m_recv_flags);
+		len = ::recv(m_sock_fd, (void *)((uint8_t *)buffer + total_recv_size), size - total_recv_size, m_recv_flags);
 
 		if (len > 0) {
 			total_recv_size += len;
@@ -268,7 +252,7 @@ ssize_t csocket::recv_for_stream(void* buffer, size_t size) const
 }
 
 
-ssize_t csocket::send(void const* buffer, size_t size) const
+ssize_t csocket::send(const void *buffer, size_t size) const
 {
 	if (m_sock_type == SOCK_STREAM)
 		return send_for_stream(buffer, size);

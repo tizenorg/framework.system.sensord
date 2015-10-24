@@ -31,6 +31,9 @@
 #include <sensor_plugin_loader.h>
 #include <cvirtual_sensor_config.h>
 
+using std::string;
+using std::vector;
+
 #define INITIAL_VALUE -1
 #define GRAVITY 9.80665
 
@@ -119,9 +122,9 @@ bool gravity_sensor::init()
 	return true;
 }
 
-sensor_type_t gravity_sensor::get_type(void)
+void gravity_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return GRAVITY_SENSOR;
+	types.push_back(GRAVITY_SENSOR);
 }
 
 bool gravity_sensor::on_start(void)
@@ -236,7 +239,7 @@ int gravity_sensor::get_sensor_data(const unsigned int event_type, sensor_data_t
 	return 0;
 }
 
-bool gravity_sensor::get_properties(sensor_properties_t &properties)
+bool gravity_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	properties.min_range = -GRAVITY;
 	properties.max_range = GRAVITY;

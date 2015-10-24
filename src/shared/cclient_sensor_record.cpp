@@ -21,6 +21,7 @@
 #include <common.h>
 
 using std::pair;
+using std::string;
 
 cclient_sensor_record::cclient_sensor_record()
 : m_client_id(0)
@@ -72,21 +73,6 @@ bool cclient_sensor_record::unregister_event(sensor_id_t sensor_id, unsigned int
 	return true;
 }
 
-bool cclient_sensor_record::set_interval(sensor_id_t sensor_id, unsigned int interval)
-{
-	auto it_usage = m_sensor_usages.find(sensor_id);
-
-	if (it_usage == m_sensor_usages.end()) {
-		csensor_usage usage;
-		usage.m_interval = interval;
-		m_sensor_usages.insert(pair<sensor_id_t, csensor_usage>(sensor_id, usage));
-	} else {
-		it_usage->second.m_interval = interval;
-	}
-
-	return true;
-}
-
 bool cclient_sensor_record::set_option(sensor_id_t sensor_id, int option)
 {
 	auto it_usage = m_sensor_usages.find(sensor_id);
@@ -128,18 +114,36 @@ bool cclient_sensor_record::is_started(sensor_id_t sensor_id)
 	return it_usage->second.m_start;
 }
 
+bool cclient_sensor_record::set_batch(sensor_id_t sensor_id, unsigned int interval, unsigned int latency)
+{
+	auto it_usage = m_sensor_usages.find(sensor_id);
 
+	if (it_usage == m_sensor_usages.end()) {
+		csensor_usage usage;
+		usage.m_interval = interval;
+		usage.m_latency = latency;
+		m_sensor_usages.insert(pair<sensor_id_t, csensor_usage>(sensor_id, usage));
+	} else {
+		it_usage->second.m_interval = interval;
+		it_usage->second.m_latency = latency;
+	}
 
-unsigned int cclient_sensor_record::get_interval(sensor_id_t sensor_id)
+	return true;
+}
+
+bool cclient_sensor_record::get_batch(sensor_id_t sensor_id, unsigned int &interval, unsigned int &latency)
 {
 	auto it_usage = m_sensor_usages.find(sensor_id);
 
 	if (it_usage == m_sensor_usages.end()) {
 		ERR("Sensor[0x%x] is not found", sensor_id);
-		return 0;
+		return false;
 	}
 
-	return it_usage->second.m_interval;
+	interval = it_usage->second.m_interval;
+	latency = it_usage->second.m_latency;
+
+	return true;
 }
 
 bool cclient_sensor_record::is_listening_event(sensor_id_t sensor_id, unsigned int event_type)
@@ -223,17 +227,13 @@ void cclient_sensor_record::set_client_id(int client_id)
 	m_client_id = client_id;
 }
 
-void cclient_sensor_record::set_client_info(pid_t pid)
+void cclient_sensor_record::set_client_info(pid_t pid, const string &name)
 {
 	char client_info[NAME_MAX + 32];
-	char proc_name[NAME_MAX];
-
 	m_pid = pid;
-	get_proc_name(pid, proc_name);
 
-	snprintf(client_info, sizeof(client_info), "%s[pid=%d, id=%d]", proc_name, m_pid, m_client_id);
+	snprintf(client_info, sizeof(client_info), "%s[pid=%d, id=%d]", name.c_str(), m_pid, m_client_id);
 	m_client_info.assign(client_info);
-
 }
 
 const char* cclient_sensor_record::get_client_info(void)

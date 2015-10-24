@@ -1,0 +1,13 @@
+# Package Information for pkg-config
+
+prefix=/usr/bin
+exec_prefix=${prefix}
+libdir=${prefix}/${_libdir}
+includedir=${prefix}/include/sensor-tc
+
+Name: sensor-tc
+Description: Sensor functional testing library
+Version: 1.0
+Requires:
+Libs: -L${libdir} -lsensor-tc
+Cflags: -I${includedir}

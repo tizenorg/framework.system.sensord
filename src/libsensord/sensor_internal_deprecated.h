@@ -39,12 +39,12 @@ extern "C"
 /*header for each sensor type*/
 #include <sensor_accel.h>
 #include <sensor_geomag.h>
-#include <sensor_uncal_geomag.h>
+#include <sensor_geomag_uncal.h>
 #include <sensor_light.h>
 #include <sensor_proxi.h>
 #include <sensor_motion.h>
 #include <sensor_gyro.h>
-#include <sensor_uncal_gyro.h>
+#include <sensor_gyro_uncal.h>
 #include <sensor_pressure.h>
 #include <sensor_pedo.h>
 #include <sensor_context.h>
@@ -57,12 +57,15 @@ extern "C"
 #include <sensor_orientation.h>
 #include <sensor_rv.h>
 #include <sensor_rv_raw.h>
+#include <sensor_geomagnetic_rv.h>
+#include <sensor_gaming_rv.h>
 #include <sensor_pir.h>
 #include <sensor_pir_long.h>
 #include <sensor_temperature.h>
 #include <sensor_humidity.h>
 #include <sensor_ultraviolet.h>
 #include <sensor_bio_led_green.h>
+#include <sensor_tilt.h>
 
 typedef struct {
 	condition_op_t cond_op;

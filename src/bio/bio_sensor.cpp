@@ -23,6 +23,8 @@
 #include <bio_sensor.h>
 #include <sensor_plugin_loader.h>
 
+using std::string;
+using std::vector;
 
 #define SENSOR_NAME "BIO_SENSOR"
 
@@ -43,7 +45,7 @@ bio_sensor::~bio_sensor()
 
 bool bio_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(BIO_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_BIO);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -58,9 +60,9 @@ bool bio_sensor::init()
 	return true;
 }
 
-sensor_type_t bio_sensor::get_type(void)
+void bio_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return BIO_SENSOR;
+	types.push_back(BIO_SENSOR);
 }
 
 bool bio_sensor::working(void *inst)
@@ -109,7 +111,7 @@ bool bio_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool bio_sensor::get_properties(sensor_properties_t &properties)
+bool bio_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }

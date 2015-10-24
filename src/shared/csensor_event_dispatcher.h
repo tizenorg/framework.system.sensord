@@ -27,9 +27,11 @@
 #include <csocket.h>
 #include <virtual_sensor.h>
 #include <vconf.h>
+#include <unordered_map>
+#include <list>
 
-typedef unordered_map<unsigned int, sensor_event_t> event_type_last_event_map;
-typedef list<virtual_sensor *> virtual_sensors;
+typedef std::unordered_map<unsigned int, sensor_event_t> event_type_last_event_map;
+typedef std::list<virtual_sensor *> virtual_sensors;
 
 class csensor_event_dispatcher
 {
@@ -64,6 +66,7 @@ private:
 	virtual_sensors get_active_virtual_sensors(void);
 
 	void sort_sensor_events(sensor_event_t *events, unsigned int cnt);
+	int get_systemd_socket(const char *name);
 public:
 	static csensor_event_dispatcher& get_instance();
 	bool run(void);

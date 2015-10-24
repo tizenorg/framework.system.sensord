@@ -24,14 +24,16 @@
 
 #include <thread>
 #include <chrono>
+#include <vector>
 
 using std::thread;
 using std::pair;
+using std::vector;
 
 csensor_event_listener::csensor_event_listener()
 : m_client_id(CLIENT_ID_INVALID)
-, m_thread_state(THREAD_STATE_TERMINATE)
 , m_poller(NULL)
+, m_thread_state(THREAD_STATE_TERMINATE)
 , m_hup_observer(NULL)
 {
 }
@@ -111,7 +113,7 @@ bool csensor_event_listener::stop_handle(int handle)
 }
 
 bool csensor_event_listener::register_event(int handle, unsigned int event_type,
-		unsigned int interval, int cb_type, void *cb, void* user_data)
+		unsigned int interval, unsigned int latency, int cb_type, void *cb, void* user_data)
 {
 	AUTOLOCK(m_handle_info_lock);
 
@@ -122,7 +124,7 @@ bool csensor_event_listener::register_event(int handle, unsigned int event_type,
 		return false;
 	}
 
-	if (!it_handle->second.add_reg_event_info(event_type, interval, cb_type, cb, user_data))
+	if (!it_handle->second.add_reg_event_info(event_type, interval, latency, cb_type, cb, user_data))
 		return false;
 
 	return true;
@@ -140,24 +142,6 @@ bool csensor_event_listener::unregister_event(int handle, unsigned int event_typ
 	}
 
 	if (!it_handle->second.delete_reg_event_info(event_type))
-		return false;
-
-	return true;
-}
-
-bool csensor_event_listener::change_event_interval(int handle, unsigned int event_type,
-		unsigned int interval)
-{
-	AUTOLOCK(m_handle_info_lock);
-
-	auto it_handle = m_sensor_handle_infos.find(handle);
-
-	if (it_handle == m_sensor_handle_infos.end()) {
-		ERR("Handle[%d] is not found for client %s", handle, get_client_name());
-		return false;
-	}
-
-	if (!it_handle->second.change_reg_event_interval(event_type, interval))
 		return false;
 
 	return true;
@@ -265,7 +249,7 @@ bool csensor_event_listener::set_sensor_option(int handle, int sensor_option)
 	return true;
 }
 
-bool csensor_event_listener::set_event_interval(int handle, unsigned int event_type, unsigned int interval)
+bool csensor_event_listener::set_event_batch(int handle, unsigned int event_type, unsigned int interval, unsigned int latency)
 {
 	AUTOLOCK(m_handle_info_lock);
 
@@ -276,14 +260,14 @@ bool csensor_event_listener::set_event_interval(int handle, unsigned int event_t
 		return false;
 	}
 
-	if (!it_handle->second.change_reg_event_interval(event_type, interval))
+	if (!it_handle->second.change_reg_event_batch(event_type, interval, latency))
 		return false;
 
 	return true;
 }
 
 
-bool csensor_event_listener::get_event_info(int handle, unsigned int event_type, unsigned int &interval, int &cb_type, void* &cb, void* &user_data)
+bool csensor_event_listener::get_event_info(int handle, unsigned int event_type, unsigned int &interval, unsigned int &latency, int &cb_type, void* &cb, void* &user_data)
 {
 	AUTOLOCK(m_handle_info_lock);
 
@@ -301,8 +285,8 @@ bool csensor_event_listener::get_event_info(int handle, unsigned int event_type,
 	if (!event_info)
 		return NULL;
 
-
 	interval = event_info->m_interval;
+	latency = event_info->m_latency;
 	cb_type = event_info->m_cb_type;
 	cb = event_info->m_cb;
 	user_data = event_info->m_user_data;
@@ -329,13 +313,18 @@ void csensor_event_listener::get_listening_sensors(sensor_id_vector &sensors)
 
 void csensor_event_listener::get_sensor_rep(sensor_id_t sensor, sensor_rep& rep)
 {
+	const unsigned int INVALID_BATCH_VALUE = std::numeric_limits<unsigned int>::max();
+
 	AUTOLOCK(m_handle_info_lock);
 
 	rep.active = is_sensor_active(sensor);
 	rep.option = get_active_option(sensor);
-	rep.interval = get_active_min_interval(sensor);
-	get_active_event_types(sensor, rep.event_types);
+	if (!get_active_batch(sensor, rep.interval, rep.latency)) {
+		rep.interval = INVALID_BATCH_VALUE;
+		rep.latency = INVALID_BATCH_VALUE;
+	}
 
+	get_active_event_types(sensor, rep.event_types);
 }
 
 void csensor_event_listener::operate_sensor(sensor_id_t sensor, int power_save_state)
@@ -440,11 +429,14 @@ void csensor_event_listener::set_client_id(int client_id)
 	m_client_id = client_id;
 }
 
-unsigned int csensor_event_listener::get_active_min_interval(sensor_id_t sensor)
+bool csensor_event_listener::get_active_batch(sensor_id_t sensor, unsigned int &interval, unsigned int &latency)
 {
 	unsigned int min_interval = POLL_MAX_HZ_MS;
+	unsigned int min_latency = std::numeric_limits<unsigned int>::max();
+
 	bool active_sensor_found = false;
-	unsigned int interval;
+	unsigned int _interval;
+	unsigned int _latency;
 
 	AUTOLOCK(m_handle_info_lock);
 
@@ -454,18 +446,23 @@ unsigned int csensor_event_listener::get_active_min_interval(sensor_id_t sensor)
 		if ((it_handle->second.m_sensor_id == sensor) &&
 			(it_handle->second.m_sensor_state == SENSOR_STATE_STARTED)) {
 				active_sensor_found = true;
-				interval = it_handle->second.get_min_interval();
-				min_interval = (interval < min_interval) ? interval : min_interval;
+				it_handle->second.get_batch(_interval, _latency);
+				min_interval = (_interval < min_interval) ? _interval : min_interval;
+				min_latency = (_latency < min_latency) ? _latency : min_latency;
 		}
 
 		++it_handle;
 	}
 
-	if (!active_sensor_found)
+	if (!active_sensor_found) {
 		DBG("Active sensor[0x%x] is not found for client %s", sensor, get_client_name());
+		return false;
+	}
 
-	return (active_sensor_found) ? min_interval : 0;
+	interval = min_interval;
+	latency = min_latency;
 
+	return true;
 }
 
 unsigned int csensor_event_listener::get_active_option(sensor_id_t sensor)
@@ -649,9 +646,6 @@ client_callback_info* csensor_event_listener::handle_calibration_cb(csensor_hand
 
 void csensor_event_listener::handle_events(void* event)
 {
-	const unsigned int MS_TO_US = 1000;
-	const float MIN_DELIVERY_DIFF_FACTOR = 0.75f;
-
 	unsigned long long cur_time;
 	creg_event_info *event_info = NULL;
 	sensor_event_data_t event_data;

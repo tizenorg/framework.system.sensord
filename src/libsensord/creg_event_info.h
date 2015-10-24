@@ -35,6 +35,7 @@ public:
 	int m_handle;
 	unsigned int type;
 	unsigned int m_interval;
+	unsigned int m_latency;
 	int m_cb_type;
 	void *m_cb;
 	void *m_user_data;
@@ -43,6 +44,7 @@ public:
 
 	creg_event_info():m_id(0), m_handle(-1),
 			type(0), m_interval(POLL_1HZ_MS),
+			m_latency(0),
 			m_cb_type(SENSOR_EVENT_CB), m_cb(NULL), m_user_data(NULL),
 			m_previous_event_time(0), m_fired(false){}
 

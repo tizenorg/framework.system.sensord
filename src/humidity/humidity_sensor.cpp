@@ -23,6 +23,9 @@
 #include <humidity_sensor.h>
 #include <sensor_plugin_loader.h>
 
+using std::string;
+using std::vector;
+
 #define SENSOR_NAME "HUMIDITY_SENSOR"
 
 humidity_sensor::humidity_sensor()
@@ -43,7 +46,7 @@ humidity_sensor::~humidity_sensor()
 
 bool humidity_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(HUMIDITY_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_HUMIDITY);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -64,9 +67,9 @@ bool humidity_sensor::init()
 	return true;
 }
 
-sensor_type_t humidity_sensor::get_type(void)
+void humidity_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return HUMIDITY_SENSOR;
+	types.push_back(HUMIDITY_SENSOR);
 }
 
 bool humidity_sensor::working(void *inst)
@@ -116,7 +119,7 @@ bool humidity_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool humidity_sensor::get_properties(sensor_properties_t &properties)
+bool humidity_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }

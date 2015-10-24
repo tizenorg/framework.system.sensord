@@ -24,33 +24,30 @@
 #include <mutex>
 #include <condition_variable>
 
-using std::queue;
-using std::mutex;
-using std::lock_guard;
-using std::unique_lock;
-using std::condition_variable;
-
 class csensor_event_queue
 {
 private:
 	static const unsigned int QUEUE_FULL_SIZE = 1000;
 
-	queue<void* > m_queue;
-	mutex m_mutex;
-	condition_variable m_cond_var;
+	std::queue<void* > m_queue;
+	std::mutex m_mutex;
+	std::condition_variable m_cond_var;
 
-	typedef lock_guard<mutex> lock;
-	typedef unique_lock<mutex> ulock;
+	typedef std::lock_guard<std::mutex> lock;
+	typedef std::unique_lock<std::mutex> ulock;
 
-	csensor_event_queue();
-	csensor_event_queue(csensor_event_queue const&) {};
-	csensor_event_queue& operator=(csensor_event_queue const&);
+	csensor_event_queue() {};
+	~csensor_event_queue() {};
+	csensor_event_queue(const csensor_event_queue &) {};
+	csensor_event_queue& operator=(const csensor_event_queue &);
 	void push_internal(void *event);
-
 public:
 	static csensor_event_queue& get_instance();
-	void push(sensor_event_t const &event);
-	void push(sensorhub_event_t const &event);
+	void push(const sensor_event_t &event);
+	void push(sensor_event_t *event);
+	void push(const sensorhub_event_t &event);
+	void push(sensorhub_event_t *event);
+
 	void* pop(void);
 };
 

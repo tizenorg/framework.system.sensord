@@ -36,8 +36,10 @@ protected:
 	physical_sensor();
 	virtual ~physical_sensor();
 
-	bool push(sensor_event_t const &event);
-	bool push(sensorhub_event_t const &event);
+	bool push(const sensor_event_t  &event);
+	bool push(sensor_event_t *event);
+	bool push(const sensorhub_event_t &event);
+	bool push(sensorhub_event_t *event);
 
 	void set_poller(working_func_t func, void *arg);
 	bool start_poll(void);

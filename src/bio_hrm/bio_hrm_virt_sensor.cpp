@@ -39,6 +39,8 @@
 #include <fstream>
 
 using std::ifstream;
+using std::string;
+using std::vector;
 
 #define SENSOR_NAME "BIO_HRM_SENSOR"
 
@@ -63,7 +65,7 @@ bio_hrm_virt_sensor::~bio_hrm_virt_sensor()
 
 bool bio_hrm_virt_sensor::init()
 {
-	sensor_hal *bio_hrm_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(BIO_HRM_SENSOR);
+	sensor_hal *bio_hrm_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_BIO_HRM);
 
 	if (bio_hrm_sensor_hal)
 		return false;
@@ -76,7 +78,7 @@ bool bio_hrm_virt_sensor::init()
 		return false;
 	}
 
-	sensor_hal *bio_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(BIO_SENSOR);
+	sensor_hal *bio_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_BIO);
 
 	if (!bio_sensor_hal) {
 		ERR("Fail to load bio_sensor_hal");
@@ -102,9 +104,9 @@ bool bio_hrm_virt_sensor::init()
 	return true;
 }
 
-sensor_type_t bio_hrm_virt_sensor::get_type(void)
+void bio_hrm_virt_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return BIO_HRM_SENSOR;
+	types.push_back(BIO_HRM_SENSOR);
 }
 
 
@@ -215,9 +217,9 @@ int bio_hrm_virt_sensor::get_sensor_data(unsigned int data_id, sensor_data_t &da
 	return 0;
 }
 
-bool bio_hrm_virt_sensor::get_properties(sensor_properties_t &properties)
+bool bio_hrm_virt_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
-	m_bio_sensor->get_properties(properties);
+	m_bio_sensor->get_properties(BIO_SENSOR, properties);
 	properties.name = properties.name + " BIO HRM";
 	return true;
 }

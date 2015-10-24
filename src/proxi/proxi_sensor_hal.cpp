@@ -25,6 +25,7 @@
 #include <sys/ioctl.h>
 #include <fstream>
 
+using std::string;
 using std::ifstream;
 
 #define SENSOR_TYPE_PROXI		"PROXI"
@@ -107,9 +108,9 @@ string proxi_sensor_hal::get_model_id(void)
 	return m_model_id;
 }
 
-sensor_type_t proxi_sensor_hal::get_type(void)
+sensor_hal_type_t proxi_sensor_hal::get_type(void)
 {
-	return PROXIMITY_SENSOR;
+	return SENSOR_HAL_TYPE_PROXIMITY;
 }
 
 bool proxi_sensor_hal::enable(void)

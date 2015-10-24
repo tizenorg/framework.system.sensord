@@ -26,6 +26,7 @@
 #include <fstream>
 
 using std::ifstream;
+using std::string;
 
 #define SENSOR_TYPE_PIR_LONG	"PIR_LONG"
 #define ELEMENT_NAME 			"NAME"
@@ -107,9 +108,9 @@ string pir_long_sensor_hal::get_model_id(void)
 	return m_model_id;
 }
 
-sensor_type_t pir_long_sensor_hal::get_type(void)
+sensor_hal_type_t pir_long_sensor_hal::get_type(void)
 {
-	return PIR_LONG_SENSOR;
+	return SENSOR_HAL_TYPE_PIR_LONG;
 }
 
 bool pir_long_sensor_hal::enable(void)

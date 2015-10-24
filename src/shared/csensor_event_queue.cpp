@@ -20,18 +20,13 @@
 #include <csensor_event_queue.h>
 #include "common.h"
 
-csensor_event_queue::csensor_event_queue()
-{
-}
-
 csensor_event_queue& csensor_event_queue::get_instance()
 {
 	static csensor_event_queue inst;
 	return inst;
 }
 
-
-void csensor_event_queue::push(sensor_event_t const &event)
+void csensor_event_queue::push(const sensor_event_t &event)
 {
 	sensor_event_t *new_event = new(std::nothrow) sensor_event_t;
 	retm_if(!new_event, "Failed to allocate memory");
@@ -40,13 +35,23 @@ void csensor_event_queue::push(sensor_event_t const &event)
 	push_internal(new_event);
 }
 
-void csensor_event_queue::push(sensorhub_event_t const &event)
+void csensor_event_queue::push(sensor_event_t *event)
+{
+	push_internal(event);
+}
+
+void csensor_event_queue::push(const sensorhub_event_t &event)
 {
 	sensorhub_event_t *new_event = new(std::nothrow) sensorhub_event_t;
 	retm_if(!new_event, "Failed to allocate memory");
 	*new_event = event;
 
 	push_internal(new_event);
+}
+
+void csensor_event_queue::push(sensorhub_event_t *event)
+{
+	push_internal(event);
 }
 
 void csensor_event_queue::push_internal(void *event)
@@ -63,7 +68,6 @@ void csensor_event_queue::push_internal(void *event)
 			delete (sensorhub_event_t *)event;
 		else
 			delete (sensor_event_t *)event;
-
 	} else
 		m_queue.push(event);
 

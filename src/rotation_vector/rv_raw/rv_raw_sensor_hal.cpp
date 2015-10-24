@@ -26,6 +26,7 @@
 #include <fstream>
 
 using std::ifstream;
+using std::string;
 
 #define SENSOR_TYPE_RV_RAW	"ROTATION_VECTOR"
 #define ELEMENT_NAME			"NAME"
@@ -108,9 +109,9 @@ string rv_raw_sensor_hal::get_model_id(void)
 	return m_model_id;
 }
 
-sensor_type_t rv_raw_sensor_hal::get_type(void)
+sensor_hal_type_t rv_raw_sensor_hal::get_type(void)
 {
-	return RV_RAW_SENSOR;
+	return SENSOR_HAL_TYPE_RV_RAW;
 }
 
 bool rv_raw_sensor_hal::enable(void)

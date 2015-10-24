@@ -23,6 +23,8 @@
 #include <proxi_sensor.h>
 #include <sensor_plugin_loader.h>
 
+using std::string;
+using std::vector;
 
 #define SENSOR_NAME "PROXI_SENSOR"
 
@@ -46,7 +48,7 @@ proxi_sensor::~proxi_sensor()
 
 bool proxi_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(PROXIMITY_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_PROXIMITY);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -57,9 +59,9 @@ bool proxi_sensor::init()
 	return true;
 }
 
-sensor_type_t proxi_sensor::get_type(void)
+void proxi_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return PROXIMITY_SENSOR;
+	types.push_back(PROXIMITY_SENSOR);
 }
 
 bool proxi_sensor::working(void *inst)
@@ -123,7 +125,7 @@ bool proxi_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool proxi_sensor::get_properties(sensor_properties_t &properties)
+bool proxi_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	m_sensor_hal->get_properties(properties);
 

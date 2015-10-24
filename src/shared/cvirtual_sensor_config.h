@@ -24,14 +24,14 @@
 
 #define VIRTUAL_SENSOR_CONFIG_FILE_PATH "/usr/etc/virtual_sensors.xml"
 
-typedef unordered_map<string,string> Element;
+typedef std::unordered_map<std::string,std::string> Element;
 /*
 * an Element  is a group of attributes
 * <Element value1 = "10.0", value2 =  "20.0"/>
 *
 */
 
-typedef unordered_map<string,Element> Virtual_sensor;
+typedef std::unordered_map<std::string,Element> Virtual_sensor;
 /*
 * a Virtual_sensor is a group of elements to consist of one virtual sensor's configuration
 *	<ORIENTATION>
@@ -40,7 +40,7 @@ typedef unordered_map<string,Element> Virtual_sensor;
 *		...
 */
 
-typedef unordered_map<string,Virtual_sensor> virtual_sensor_config;
+typedef std::unordered_map<std::string,Virtual_sensor> virtual_sensor_config;
 /*
 * a Virtual_sensor_config represents virtual_sensors.xml
 * <ORIENTATION/>
@@ -49,7 +49,7 @@ typedef unordered_map<string,Virtual_sensor> virtual_sensor_config;
 *
 */
 
-typedef unordered_map<string,virtual_sensor_config> virtual_sensor_device_config;
+typedef std::unordered_map<std::string,virtual_sensor_config> virtual_sensor_device_config;
 /*
 * a virtual_sensor_device_config represents virtual_sensors.xml
 * <emulator/>
@@ -64,22 +64,22 @@ private:
 	cvirtual_sensor_config(cvirtual_sensor_config const&) {};
 	cvirtual_sensor_config& operator=(cvirtual_sensor_config const&);
 
-	bool load_config(const string& config_path);
+	bool load_config(const std::string& config_path);
 
 	virtual_sensor_device_config m_virtual_sensor_config;
 
 public:
 	static cvirtual_sensor_config& get_instance(void);
 
-	bool get(const string& sensor_type, const string& element, const string& attr, string& value);
-	bool get(const string& sensor_type, const string& element, const string& attr, float *value);
-	bool get(const string& sensor_type, const string& element, const string& attr, int *value);
+	bool get(const std::string& sensor_type, const std::string& element, const std::string& attr, std::string& value);
+	bool get(const std::string& sensor_type, const std::string& element, const std::string& attr, float *value);
+	bool get(const std::string& sensor_type, const std::string& element, const std::string& attr, int *value);
 
-	bool get(const string& sensor_type, const string& element, string& value);
-	bool get(const string& sensor_type, const string& element, float *value, int count =1);
-	bool get(const string& sensor_type, const string& element, int *value, int count = 1);
+	bool get(const std::string& sensor_type, const std::string& element, std::string& value);
+	bool get(const std::string& sensor_type, const std::string& element, float *value, int count =1);
+	bool get(const std::string& sensor_type, const std::string& element, int *value, int count = 1);
 
-	bool is_supported(const string &sensor_type);
+	bool is_supported(const std::string &sensor_type);
 };
 
 #endif

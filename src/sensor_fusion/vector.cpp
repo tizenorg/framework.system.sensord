@@ -294,6 +294,14 @@ vect<T> cross(const vect<T> v1, const vect<T> v2)
 }
 
 template <typename T>
+T dot(const vect<T> v1, const vect<T> v2)
+{
+	assert(v1.m_size == v2.m_size);
+
+	return (v1.m_vec[0] * v2.m_vec[0] + v1.m_vec[1] * v2.m_vec[1] + v1.m_vec[2] * v2.m_vec[2]);
+}
+
+template <typename T>
 bool is_initialized(const vect<T> v)
 {
 	vect<T> v1(v.m_size);

@@ -21,17 +21,14 @@
 #define _RV_RAW_SENSOR_HAL_H_
 
 #include <sensor_hal.h>
-#include <string>
-
-using std::string;
 
 class rv_raw_sensor_hal : public sensor_hal
 {
 public:
 	rv_raw_sensor_hal();
 	virtual ~rv_raw_sensor_hal();
-	string get_model_id(void);
-	sensor_type_t get_type(void);
+	std::string get_model_id(void);
+	sensor_hal_type_t get_type(void);
 	bool enable(void);
 	bool disable(void);
 	bool set_interval(unsigned long val);
@@ -39,9 +36,9 @@ public:
 	virtual int get_sensor_data(sensor_data_t &data);
 	virtual bool get_properties(sensor_properties_t &properties);
 private:
-	string m_model_id;
-	string m_vendor;
-	string m_chip_name;
+	std::string m_model_id;
+	std::string m_vendor;
+	std::string m_chip_name;
 
 	unsigned long m_polling_interval;
 
@@ -54,9 +51,9 @@ private:
 	unsigned long long m_fired_time;
 	int m_node_handle;
 
-	string m_enable_node;
-	string m_data_node;
-	string m_interval_node;
+	std::string m_enable_node;
+	std::string m_data_node;
+	std::string m_interval_node;
 
 	bool m_sensorhub_controlled;
 

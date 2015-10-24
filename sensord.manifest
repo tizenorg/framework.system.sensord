@@ -5,6 +5,12 @@
 			<label name="sensord::server" />
 			<label name="sensord::bio" />
 		</provide>
+		<request>
+			<smack request="security-server::api-privilege-by-pid" type="w"/>
+			<smack request="device::input" type="rw"/>
+			<smack request="device::sys_logging" type="rw"/>
+			<smack request="device::app_logging" type="rw"/>
+		</request>
 	</define>
 	<request>
 		<domain name="sensord" />

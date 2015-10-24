@@ -30,13 +30,26 @@
 #include <sf_common.h>
 
 #include <virtual_sensor.h>
+#include <cvirtual_sensor_config.h>
 #include <auto_rotation_sensor.h>
 #include <sensor_plugin_loader.h>
 #include <auto_rotation_alg.h>
 #include <auto_rotation_alg_emul.h>
 
-#define SENSOR_NAME "AUTO_ROTATION_SENSOR"
-#define AUTO_ROTATION_LIB "/usr/lib/sensord/libauto-rotation.so"
+using std::string;
+using std::vector;
+
+#define SENSOR_NAME						"AUTO_ROTATION_SENSOR"
+#define SENSOR_TYPE_AUTO_ROTATION		"AUTO_ROTATION"
+
+#define MS_TO_US 1000
+
+#define ELEMENT_NAME					"NAME"
+#define ELEMENT_VENDOR					"VENDOR"
+#define ELEMENT_RAW_DATA_UNIT			"RAW_DATA_UNIT"
+#define ELEMENT_DEFAULT_SAMPLING_TIME	"DEFAULT_SAMPLING_TIME"
+
+#define AUTO_ROTATION_LIB				"/usr/lib/sensord/libauto_rotation_sensor.so"
 
 auto_rotation_sensor::auto_rotation_sensor()
 : m_accel_sensor(NULL)
@@ -44,9 +57,33 @@ auto_rotation_sensor::auto_rotation_sensor()
 , m_rotation_time(1) // rotation state is valid from initial state, so set rotation time to non-zero value
 , m_alg(NULL)
 {
+	cvirtual_sensor_config &config = cvirtual_sensor_config::get_instance();
 	m_name = string(SENSOR_NAME);
 
 	register_supported_event(AUTO_ROTATION_EVENT_CHANGE_STATE);
+
+	if (!config.get(SENSOR_TYPE_AUTO_ROTATION, ELEMENT_VENDOR, m_vendor)) {
+		ERR("[VENDOR] is empty\n");
+		throw ENXIO;
+	}
+
+	INFO("m_vendor = %s", m_vendor.c_str());
+
+	if (!config.get(SENSOR_TYPE_AUTO_ROTATION, ELEMENT_RAW_DATA_UNIT, m_raw_data_unit)) {
+		ERR("[RAW_DATA_UNIT] is empty\n");
+		throw ENXIO;
+	}
+
+	INFO("m_raw_data_unit = %s", m_raw_data_unit.c_str());
+
+	if (!config.get(SENSOR_TYPE_AUTO_ROTATION, ELEMENT_DEFAULT_SAMPLING_TIME, &m_default_sampling_time)) {
+		ERR("[DEFAULT_SAMPLING_TIME] is empty\n");
+		throw ENXIO;
+	}
+
+	INFO("m_default_sampling_time = %d", m_default_sampling_time);
+
+	m_interval = m_default_sampling_time * MS_TO_US;
 }
 
 auto_rotation_sensor::~auto_rotation_sensor()
@@ -95,9 +132,9 @@ bool auto_rotation_sensor::init()
 	return true;
 }
 
-sensor_type_t auto_rotation_sensor::get_type(void)
+void auto_rotation_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return AUTO_ROTATION_SENSOR;
+	types.push_back(AUTO_ROTATION_SENSOR);
 }
 
 bool auto_rotation_sensor::on_start(void)
@@ -107,6 +144,7 @@ bool auto_rotation_sensor::on_start(void)
 	m_alg->start();
 
 	m_accel_sensor->add_client(ACCELEROMETER_EVENT_RAW_DATA_REPORT_ON_TIME);
+	m_accel_sensor->add_interval((int)this, (m_interval/MS_TO_US), true);
 	m_accel_sensor->start();
 
 	return activate();
@@ -115,6 +153,7 @@ bool auto_rotation_sensor::on_start(void)
 bool auto_rotation_sensor::on_stop(void)
 {
 	m_accel_sensor->delete_client(ACCELEROMETER_EVENT_RAW_DATA_REPORT_ON_TIME);
+	m_accel_sensor->delete_interval((int)this, true);
 	m_accel_sensor->stop();
 
 	return deactivate();
@@ -153,7 +192,7 @@ void auto_rotation_sensor::synthesize(const sensor_event_t& event, vector<sensor
 	return;
 }
 
-int auto_rotation_sensor::get_sensor_data(unsigned int data_id, sensor_data_t &data)
+int auto_rotation_sensor::get_sensor_data(const unsigned int data_id, sensor_data_t &data)
 {
 	if (data_id != AUTO_ROTATION_BASE_DATA_SET)
 		return -1;
@@ -168,7 +207,7 @@ int auto_rotation_sensor::get_sensor_data(unsigned int data_id, sensor_data_t &d
 	return 0;
 }
 
-bool auto_rotation_sensor::get_properties(sensor_properties_t &properties)
+bool auto_rotation_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	properties.name = "Auto Rotation Sensor";
 	properties.vendor = "Samsung Electronics";

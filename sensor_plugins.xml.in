@@ -2,9 +2,8 @@
 	<HAL>
 		<MODULE path = "/usr/lib/sensord/libaccel_sensor_hal.so"/>
 		<MODULE path = "/usr/lib/sensord/libgyro_sensor_hal.so"/>
-		<MODULE path = "/usr/lib/sensord/libuncal_gyro_sensor_hal.so"/>
 		<MODULE path = "/usr/lib/sensord/libgeo_sensor_hal.so"/>
-		<MODULE path = "/usr/lib/sensord/libuncal_geo_sensor_hal.so"/>
+		<MODULE path = "/usr/lib/sensord/libgeo_uncal_sensor_hal.so"/>
 		<MODULE path = "/usr/lib/sensord/libproxi_sensor_hal.so"/>
 		<MODULE path = "/usr/lib/sensord/liblight_sensor_hal.so"/>
 		<MODULE path = "/usr/lib/sensord/libpressure_sensor_hal.so"/>
@@ -24,9 +23,9 @@
 	<SENSOR>
 		<MODULE path = "/usr/lib/sensord/libaccel_sensor.so"/>
 		<MODULE path = "/usr/lib/sensord/libgyro_sensor.so"/>
-		<MODULE path = "/usr/lib/sensord/libuncal_gyro_sensor.so"/>
+		<MODULE path = "/usr/lib/sensord/libgyro_uncal_sensor.so"/>
 		<MODULE path = "/usr/lib/sensord/libgeo_sensor.so"/>
-		<MODULE path = "/usr/lib/sensord/libuncal_geo_sensor.so"/>
+		<MODULE path = "/usr/lib/sensord/libgeo_uncal_sensor.so"/>
 		<MODULE path = "/usr/lib/sensord/libproxi_sensor.so"/>
 		<MODULE path = "/usr/lib/sensord/liblight_sensor.so"/>
 		<MODULE path = "/usr/lib/sensord/libpressure_sensor.so"/>
@@ -45,7 +44,10 @@
 		<MODULE path = "/usr/lib/sensord/libgravity_sensor.so"/>
 		<MODULE path = "/usr/lib/sensord/liblinear_accel_sensor.so"/>
 		<MODULE path = "/usr/lib/sensord/librv_sensor.so"/>
+		<MODULE path = "/usr/lib/sensord/libgeomagnetic_rv_sensor.so"/>
+		<MODULE path = "/usr/lib/sensord/libgaming_rv_sensor.so"/>
 		<MODULE path = "/usr/lib/sensord/libdust_sensor.so"/>
+		<MODULE path = "/usr/lib/sensord/libtilt_sensor.so"/>
 	</SENSOR>
 
 

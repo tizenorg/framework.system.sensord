@@ -24,9 +24,7 @@
 #include <sensor_internal.h>
 #include <sensor/MREngine.h>
 #include <vconf.h>
-#include <string>
-
-using std::string;
+#include <map>
 
 class motion_sensor : public virtual_sensor {
 public:
@@ -34,13 +32,14 @@ public:
 	virtual ~motion_sensor();
 
 	bool init();
-	sensor_type_t get_type(void);
+	virtual void get_types(std::vector<sensor_type_t> &types);
 
 	static bool working(void *inst);
 
 	bool add_client(unsigned int event_type);
 	bool delete_client(unsigned int event_type);
-	void synthesize(const sensor_event_t& event, vector<sensor_event_t> &outs);
+	void synthesize(const sensor_event_t& event, std::vector<sensor_event_t> &outs);
+	virtual bool get_properties(sensor_type_t sensor_type, sensor_properties_t &properties);
 private:
 	typedef struct {
 		double a_x;
@@ -59,7 +58,7 @@ private:
 		int used_sensor;
 	} motion_event_info;
 
-	typedef unordered_map<unsigned int, motion_event_info> motion_info_map;
+	typedef std::unordered_map<unsigned int, motion_event_info> motion_info_map;
 
 	static const int ACC_USED = 0x1;
 	static const int GYRO_USED = 0x2;
@@ -89,11 +88,9 @@ private:
 	static float get_scale_factor(int sensitivity);
 	bool load_lib(void);
 	void reset(void);
-	void put_motion_event(unsigned int event_type, int value, vector<sensor_event_t> &outs);
-	void put_tilt_event(unsigned int event_type, float scale_factor, vector<sensor_event_t> &outs);
-	void get_motion(float a_x, float a_y, float a_z, float g_x, float g_y, float g_z, int proxi, vector<sensor_event_t> &outs);
-
-	virtual bool get_properties(sensor_properties_t &properties);
+	void put_motion_event(unsigned int event_type, int value, std::vector<sensor_event_t> &outs);
+	void put_tilt_event(unsigned int event_type, float scale_factor, std::vector<sensor_event_t> &outs);
+	void get_motion(float a_x, float a_y, float a_z, float g_x, float g_y, float g_z, int proxi, std::vector<sensor_event_t> &outs);
 
 	bool is_active_event(unsigned int type);
 	bool is_sensor_used(int sensor);

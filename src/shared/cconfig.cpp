@@ -19,8 +19,11 @@
 
 #include <cconfig.h>
 #include <fstream>
+#include <string>
 
 using std::ifstream;
+using std::string;
+using std::istringstream;
 
 cconfig::cconfig(void)
 {

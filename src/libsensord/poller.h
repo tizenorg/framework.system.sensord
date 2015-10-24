@@ -29,8 +29,6 @@
 #include <algorithm>
 #include <queue>
 
-using std::queue;
-
 class poller {
 public:
 	poller(int fd);
@@ -39,7 +37,7 @@ public:
 	bool poll(int &event);
 private:
 	int m_epfd;
-	queue<int> m_event_queue;
+	std::queue<int> m_event_queue;
 
 	bool create(int fd);
 	bool fill_event_queue(void);

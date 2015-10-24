@@ -20,6 +20,11 @@
 #include <sensor_info.h>
 #include <common.h>
 #include <algorithm>
+#include <vector>
+#include <string>
+
+using std::vector;
+using std::string;
 
 sensor_type_t sensor_info::get_type(void)
 {
@@ -211,8 +216,8 @@ void sensor_info::show(void)
 	INFO("Fifo_count = %d", m_fifo_count);
 	INFO("Max_batch_count = %d", m_max_batch_count);
 
-	for (int i = 0; i < m_supported_events.size(); ++i)
-		INFO("supported_events[%d] = 0x%x", i, m_supported_events[i]);
+	for (unsigned int i = 0; i < m_supported_events.size(); ++i)
+		INFO("supported_events[%u] = 0x%x", i, m_supported_events[i]);
 }
 
 
@@ -237,7 +242,8 @@ void sensor_info::put(raw_data_t &data, int value)
 {
 	char buffer[sizeof(value)];
 
-	(*(int *) buffer) = value;
+	int *temp = (int *) buffer;
+	*temp = value;
 
 	copy(&buffer[0], &buffer[sizeof(buffer)], back_inserter(data));
 }
@@ -246,7 +252,8 @@ void sensor_info::put(raw_data_t &data, float value)
 {
 	char buffer[sizeof(value)];
 
-	(*(float *) buffer) = value;
+	float *temp = (float *) buffer;
+	*temp = value;
 
 	copy(&buffer[0], &buffer[sizeof(buffer)], back_inserter(data));
 }

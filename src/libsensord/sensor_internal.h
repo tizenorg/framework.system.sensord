@@ -24,6 +24,10 @@
 #define DEPRECATED __attribute__((deprecated))
 #endif
 
+#ifndef API
+#define API __attribute__((visibility("default")))
+#endif
+
 #include "stdbool.h"
 
 #ifdef __cplusplus
@@ -41,12 +45,12 @@ extern "C"
 /*header for each sensor type*/
 #include <sensor_accel.h>
 #include <sensor_geomag.h>
-#include <sensor_uncal_geomag.h>
+#include <sensor_geomag_uncal.h>
 #include <sensor_light.h>
 #include <sensor_proxi.h>
 #include <sensor_motion.h>
 #include <sensor_gyro.h>
-#include <sensor_uncal_gyro.h>
+#include <sensor_gyro_uncal.h>
 #include <sensor_pressure.h>
 #include <sensor_pedo.h>
 #include <sensor_context.h>
@@ -58,6 +62,8 @@ extern "C"
 #include <sensor_linear_accel.h>
 #include <sensor_orientation.h>
 #include <sensor_rv.h>
+#include <sensor_geomagnetic_rv.h>
+#include <sensor_gaming_rv.h>
 #include <sensor_rv_raw.h>
 #include <sensor_pir.h>
 #include <sensor_pir_long.h>
@@ -66,6 +72,7 @@ extern "C"
 #include <sensor_ultraviolet.h>
 #include <sensor_dust.h>
 #include <sensor_bio_led_green.h>
+#include <sensor_tilt.h>
 
 typedef void (*sensor_cb_t)(sensor_t sensor, unsigned int event_type, sensor_data_t *data, void *user_data);
 typedef void (*sensorhub_cb_t)(sensor_t sensor, unsigned int event_type, sensorhub_data_t *data, void *user_data);
@@ -305,10 +312,11 @@ bool sensord_change_event_interval(int handle, unsigned int event_type, unsigned
  * @brief Change the max batch latency of a specifed event type in a connected sensor.
  *
  * @param[in] handle a handle represensting a connected sensor.
+ * @param[in] event_type an event type to change max batch latency
  * @param[in] max_batch_latency an event in the batch can be delayed by at most max_batch_latency microseconds. If this is set to zero, batch mode is disabled.
  * @return true on success, otherwise false.
  */
-bool sensord_change_event_max_batch_latency(int handle, unsigned int max_batch_latency);
+bool sensord_change_event_max_batch_latency(int handle, unsigned int event_type, unsigned int max_batch_latency);
 
 /**
  * @brief Change the option of a connected sensor.

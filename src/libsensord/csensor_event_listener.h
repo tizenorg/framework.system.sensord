@@ -38,19 +38,10 @@
 #include <cmutex.h>
 #include <poller.h>
 
-using std::unordered_map;
-using std::vector;
-using std::string;
-using std::queue;
-using std::mutex;
-using std::lock_guard;
-using std::unique_lock;
-using std::condition_variable;
-
-typedef vector<unsigned int> handle_vector;
-typedef vector<sensor_id_t> sensor_id_vector;
-typedef unordered_map<int,csensor_handle_info> sensor_handle_info_map;
-typedef unordered_map<sensor_id_t, command_channel*> sensor_command_channel_map;
+typedef std::vector<unsigned int> handle_vector;
+typedef std::vector<sensor_id_t> sensor_id_vector;
+typedef std::unordered_map<int,csensor_handle_info> sensor_handle_info_map;
+typedef std::unordered_map<sensor_id_t, command_channel*> sensor_command_channel_map;
 
 typedef struct {
 	unsigned long long event_id;
@@ -72,6 +63,7 @@ typedef struct sensor_rep
 	bool active;
 	int option;
 	unsigned int interval;
+	unsigned int latency;
 	event_type_vector event_types;
 } sensor_rep;
 
@@ -84,9 +76,8 @@ public:
 	bool delete_handle(int handle);
 	bool start_handle(int handle);
 	bool stop_handle(int handle);
-	bool register_event(int handle, unsigned int event_type, unsigned int interval, int cb_type, void *cb, void* user_data);
+	bool register_event(int handle, unsigned int event_type, unsigned int interval, unsigned int latency, int cb_type, void *cb, void* user_data);
 	bool unregister_event(int handle, unsigned int event_type);
-	bool change_event_interval(int handle, unsigned int event_type, unsigned int interval);
 
 	bool register_accuracy_cb(int handle, sensor_accuracy_changed_cb_t cb, void* user_data);
 	bool unregister_accuracy_cb(int handle);
@@ -95,12 +86,12 @@ public:
 	bool get_sensor_params(int handle, int &sensor_state, int &sensor_option);
 	bool set_sensor_state(int handle, int sensor_state);
 	bool set_sensor_option(int handle, int sensor_option);
-	bool set_event_interval(int handle, unsigned int event_type, unsigned int interval);
-	bool get_event_info(int handle, unsigned int event_type, unsigned int &interval, int &cb_type, void* &cb, void* &user_data);
+	bool set_event_batch(int handle, unsigned int event_type, unsigned int interval, unsigned int latency);
+	bool get_event_info(int handle, unsigned int event_type, unsigned int &interval, unsigned int &latency, int &cb_type, void* &cb, void* &user_data);
 	void operate_sensor(sensor_id_t sensor, int power_save_state);
 	void get_listening_sensors(sensor_id_vector &sensors);
 
-	unsigned int get_active_min_interval(sensor_id_t sensor_id);
+	bool get_active_batch(sensor_id_t sensor_id, unsigned int &interval, unsigned int &latency);
 	unsigned int get_active_option(sensor_id_t sensor_id);
 	void get_active_event_types(sensor_id_t sensor_id, event_type_vector &active_event_types);
 
@@ -135,8 +126,8 @@ private:
 		THREAD_STATE_STOP,
 		THREAD_STATE_TERMINATE,
 	};
-	typedef lock_guard<mutex> lock;
-	typedef unique_lock<mutex> ulock;
+	typedef std::lock_guard<std::mutex> lock;
+	typedef std::unique_lock<std::mutex> ulock;
 
 	sensor_handle_info_map m_sensor_handle_infos;
 	sensor_command_channel_map m_command_channels;
@@ -149,8 +140,8 @@ private:
 	cmutex m_handle_info_lock;
 
 	thread_state m_thread_state;
-	mutex m_thread_mutex;
-	condition_variable m_thread_cond;
+	std::mutex m_thread_mutex;
+	std::condition_variable m_thread_cond;
 
 	hup_observer_t m_hup_observer;
 

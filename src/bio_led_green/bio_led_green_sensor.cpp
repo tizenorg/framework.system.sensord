@@ -35,6 +35,9 @@
 #include <string.h>
 #include <csensor_config.h>
 
+using std::string;
+using std::vector;
+
 #define SENSOR_NAME "BIO_LED_GREEN_SENSOR"
 #define SENSOR_TYPE_BIO_GREEN "BIO_LED_GREEN"
 
@@ -57,14 +60,14 @@ bool bio_led_green_sensor::init()
 {
 	sensor_properties_t properties;
 
-	m_bio_sensor = sensor_plugin_loader::get_instance().get_sensor(BIO_SENSOR);
+	m_bio_sensor = sensor_plugin_loader::get_instance().get_sensor(SENSOR_HAL_TYPE_BIO);
 
 	if (!m_bio_sensor) {
 		ERR("Failed to load bio sensor");
 		return false;
 	}
 
-	m_bio_sensor->get_properties(properties);
+	m_bio_sensor->get_properties(BIO_SENSOR, properties);
 
 	csensor_config &config = csensor_config::get_instance();
 
@@ -80,9 +83,9 @@ bool bio_led_green_sensor::init()
 	return true;
 }
 
-sensor_type_t bio_led_green_sensor::get_type(void)
+void bio_led_green_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return BIO_LED_GREEN_SENSOR;
+	types.push_back(BIO_LED_GREEN_SENSOR);
 }
 
 bool bio_led_green_sensor::on_start(void)
@@ -159,9 +162,9 @@ int bio_led_green_sensor::get_sensor_data(unsigned int data_id, sensor_data_t &d
 	return 0;
 }
 
-bool bio_led_green_sensor::get_properties(sensor_properties_t &properties)
+bool bio_led_green_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
-	m_bio_sensor->get_properties(properties);
+	m_bio_sensor->get_properties(BIO_SENSOR, properties);
 
 	properties.name = "Bio Led Green Sensor";
 

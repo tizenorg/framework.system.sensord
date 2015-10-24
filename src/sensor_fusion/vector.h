@@ -65,6 +65,7 @@ public:
 	template <typename T> friend vect<T> transpose(const matrix<T> m);
 	template<typename T> friend vect<T> cross(const vect<T> v1,
 			const vect<T> v2);
+	template <typename T> friend T dot(const vect<T> v1, const vect<T> v2);
 	template <typename T> friend T var(const vect<T> v);
 	template <typename T> friend bool is_initialized(const vect<T> v);
 };

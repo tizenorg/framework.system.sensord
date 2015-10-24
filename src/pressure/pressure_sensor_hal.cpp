@@ -26,6 +26,7 @@
 #include <fstream>
 
 using std::ifstream;
+using std::string;
 
 #define SENSOR_TYPE_PRESSURE		"PRESSURE"
 #define ELEMENT_NAME			"NAME"
@@ -151,9 +152,9 @@ string pressure_sensor_hal::get_model_id(void)
 	return m_model_id;
 }
 
-sensor_type_t pressure_sensor_hal::get_type(void)
+sensor_hal_type_t pressure_sensor_hal::get_type(void)
 {
-	return PRESSURE_SENSOR;
+	return SENSOR_HAL_TYPE_PRESSURE;
 }
 
 bool pressure_sensor_hal::enable(void)

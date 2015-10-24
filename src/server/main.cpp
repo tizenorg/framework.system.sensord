@@ -23,8 +23,10 @@
 #include <dbus_util.h>
 #include <sensor_plugin_loader.h>
 #include <fstream>
+#include <string>
 
 using std::fstream;
+using std::string;
 
 static void sig_term_handler(int signo, siginfo_t *info, void *data)
 {
@@ -83,8 +85,6 @@ int main(int argc, char *argv[])
 	server::get_instance().run();
 
 	server::get_instance().stop();
-
-	sensor_plugin_loader::get_instance().destroy();
 
 	INFO("Sensord terminated");
 	return 0;

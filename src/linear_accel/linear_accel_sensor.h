@@ -30,15 +30,15 @@ public:
 	virtual ~linear_accel_sensor();
 
 	bool init();
-	sensor_type_t get_type(void);
+	virtual void get_types(std::vector<sensor_type_t> &types);
 
-	void synthesize(const sensor_event_t &event, vector<sensor_event_t> &outs);
+	void synthesize(const sensor_event_t& event, std::vector<sensor_event_t> &outs);
 
 	bool add_interval(int client_id, unsigned int interval, bool is_processor);
 	bool delete_interval(int client_id, bool is_processor);
 
 	int get_sensor_data(const unsigned int event_type, sensor_data_t &data);
-	bool get_properties(sensor_properties_t &properties);
+	virtual bool get_properties(sensor_type_t sensor_type, sensor_properties_t &properties);
 private:
 	sensor_base *m_accel_sensor;
 	sensor_base *m_gravity_sensor;
@@ -55,8 +55,8 @@ private:
 
 	unsigned int m_enable_linear_accel;
 
-	string m_vendor;
-	string m_raw_data_unit;
+	std::string m_vendor;
+	std::string m_raw_data_unit;
 	int m_default_sampling_time;
 	float m_accel_static_bias[3];
 	int m_accel_rotation_direction_compensation[3];

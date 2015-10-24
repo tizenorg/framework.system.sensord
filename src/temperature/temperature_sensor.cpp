@@ -22,6 +22,9 @@
 #include <temperature_sensor.h>
 #include <sensor_plugin_loader.h>
 
+using std::string;
+using std::vector;
+
 #define SENSOR_NAME "TEMPERATURE_SENSOR"
 
 temperature_sensor::temperature_sensor()
@@ -42,7 +45,7 @@ temperature_sensor::~temperature_sensor()
 
 bool temperature_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(TEMPERATURE_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_TEMPERATURE);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -63,9 +66,9 @@ bool temperature_sensor::init()
 	return true;
 }
 
-sensor_type_t temperature_sensor::get_type(void)
+void temperature_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return TEMPERATURE_SENSOR;
+	types.push_back(TEMPERATURE_SENSOR);
 }
 
 bool temperature_sensor::working(void *inst)
@@ -115,7 +118,7 @@ bool temperature_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool temperature_sensor::get_properties(sensor_properties_t &properties)
+bool temperature_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }

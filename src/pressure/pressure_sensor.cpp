@@ -24,6 +24,9 @@
 #include <algorithm>
 #include <csensor_config.h>
 
+using std::string;
+using std::vector;
+
 #define SENSOR_NAME "PRESSURE_SENSOR"
 #define SENSOR_TYPE_PRESSURE		"PRESSURE"
 #define ELEMENT_NAME			"NAME"
@@ -52,7 +55,7 @@ pressure_sensor::~pressure_sensor()
 
 bool pressure_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(PRESSURE_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_PRESSURE);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -97,9 +100,9 @@ bool pressure_sensor::init()
 	return true;
 }
 
-sensor_type_t pressure_sensor::get_type(void)
+void pressure_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return PRESSURE_SENSOR;
+	types.push_back(PRESSURE_SENSOR);
 }
 
 bool pressure_sensor::working(void *inst)
@@ -149,7 +152,7 @@ bool pressure_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool pressure_sensor::get_properties(sensor_properties_t &properties)
+bool pressure_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }

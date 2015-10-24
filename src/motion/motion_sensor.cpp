@@ -35,6 +35,7 @@
 #include <algorithm>
 
 using std::unordered_map;
+using std::vector;
 using std::string;
 
 #define DEGREE_TO_RADIAN	(0.0174532925)
@@ -435,9 +436,9 @@ bool motion_sensor::init()
 	return true;
 }
 
-sensor_type_t motion_sensor::get_type(void)
+void motion_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return MOTION_SENSOR;
+	types.push_back(MOTION_SENSOR);
 }
 
 void motion_sensor::reset(void)
@@ -663,7 +664,7 @@ void motion_sensor::get_motion(float a_x, float a_y, float a_z, float g_x, float
 }
 
 
-bool motion_sensor::get_properties(sensor_properties_t &properties)
+bool motion_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	properties.name = "Motion Sensor";
 	properties.vendor = "Samsung Electronics";

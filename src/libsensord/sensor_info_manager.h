@@ -26,23 +26,19 @@
 #include <unordered_map>
 #include <unordered_set>
 
-using std::multimap;
-using std::unordered_map;
-using std::unordered_set;
-
 class sensor_info_manager {
 public:
 	static sensor_info_manager& get_instance(void);
 	const sensor_info* get_info(sensor_type_t type);
-	vector<sensor_info *> get_infos(sensor_type_t type);
+	std::vector<sensor_info *> get_infos(sensor_type_t type);
 	const sensor_info* get_info(sensor_id_t id);
 	bool is_valid(sensor_info* info);
 	void add_info(sensor_info* info);
 
 private:
-	typedef multimap<sensor_type_t, sensor_info*> sensor_infos;
-	typedef unordered_map<sensor_id_t, sensor_info*> id_to_info_map;
-	typedef unordered_set<sensor_info*> info_set;
+	typedef std::multimap<sensor_type_t, sensor_info*> sensor_infos;
+	typedef std::unordered_map<sensor_id_t, sensor_info*> id_to_info_map;
+	typedef std::unordered_set<sensor_info*> info_set;
 
 	sensor_info_manager();
 	~sensor_info_manager();

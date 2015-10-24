@@ -25,11 +25,8 @@
 #include <common.h>
 #include <string.h>
 #include <unordered_map>
-#include <vector>
-using std::unordered_map;
-using std::vector;
 
-typedef unordered_map<unsigned int,creg_event_info> event_info_map;
+typedef std::unordered_map<unsigned int,creg_event_info> event_info_map;
 
 class csensor_handle_info {
 public:
@@ -45,14 +42,14 @@ public:
 	csensor_handle_info();
 	~csensor_handle_info();
 
-	bool add_reg_event_info(unsigned int event_type, unsigned int interval, int cb_type, void *cb,void *user_data);
+	bool add_reg_event_info(unsigned int event_type, unsigned int interval, unsigned int latency, int cb_type, void *cb,void *user_data);
 	bool delete_reg_event_info(unsigned int event_type);
 
-	bool change_reg_event_interval(unsigned int event_type, unsigned int interval);
+	bool change_reg_event_batch(unsigned int event_type, unsigned int interval, unsigned int latency);
 
 	creg_event_info* get_reg_event_info(const unsigned int event_type);
 	void get_reg_event_types(event_type_vector &event_types);
-	unsigned int get_min_interval(void);
+	void get_batch(unsigned int &interval, unsigned int &latency);
 	unsigned int get_reg_event_count(void);
 
 	void clear_all_events(void);

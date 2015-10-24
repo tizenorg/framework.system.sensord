@@ -19,6 +19,7 @@
 
 #include <client_common.h>
 #include <csensor_handle_info.h>
+#include <limits>
 
 using std::pair;
 
@@ -64,7 +65,7 @@ void csensor_handle_info::get_reg_event_types(event_type_vector &event_types)
 	}
 }
 
-bool csensor_handle_info::add_reg_event_info(unsigned int event_type, unsigned int interval, int cb_type, void *cb, void *user_data)
+bool csensor_handle_info::add_reg_event_info(unsigned int event_type, unsigned int interval, unsigned int latency, int cb_type, void *cb, void *user_data)
 {
 	creg_event_info event_info;
 
@@ -79,6 +80,7 @@ bool csensor_handle_info::add_reg_event_info(unsigned int event_type, unsigned i
 	event_info.m_handle = m_handle;
 	event_info.type = event_type;
 	event_info.m_interval = interval;
+	event_info.m_latency = latency;
 	event_info.m_cb_type = cb_type;
 	event_info.m_cb = cb;
 	event_info.m_user_data = user_data;
@@ -113,7 +115,7 @@ unsigned long long csensor_handle_info::renew_event_id(void)
 	return m_event_id++;
 }
 
-bool csensor_handle_info::change_reg_event_interval(unsigned int event_type, unsigned int interval)
+bool csensor_handle_info::change_reg_event_batch(unsigned int event_type, unsigned int interval, unsigned int latency)
 {
 	auto it_event = m_reg_event_infos.find(event_type);
 
@@ -124,29 +126,39 @@ bool csensor_handle_info::change_reg_event_interval(unsigned int event_type, uns
 
 	it_event->second.m_id = renew_event_id();
 	it_event->second.m_interval = interval;
+	it_event->second.m_latency = latency;
 
 	return true;
 }
 
-unsigned int csensor_handle_info::get_min_interval(void)
+void csensor_handle_info::get_batch(unsigned int &interval, unsigned int &latency)
 {
-	unsigned int min_interval = POLL_MAX_HZ_MS;
-	unsigned int interval;
-
 	if (m_reg_event_infos.empty()) {
 		DBG("No events are registered for client %s", get_client_name());
-		return min_interval;
+		interval = POLL_MAX_HZ_MS;
+		latency = 0;
+		return;
 	}
+
+	unsigned int min_interval = POLL_MAX_HZ_MS;
+	unsigned int min_latency = std::numeric_limits<unsigned int>::max();
+
+	unsigned int _interval;
+	unsigned int _latency;
 
 	auto it_event = m_reg_event_infos.begin();
 
 	while (it_event != m_reg_event_infos.end()) {
-		interval = it_event->second.m_interval;
-		min_interval = (interval < min_interval) ? interval : min_interval;
+		_interval = it_event->second.m_interval;
+		_latency = it_event->second.m_latency;
+
+		min_interval = (_interval < min_interval) ? _interval : min_interval;
+		min_latency = (_latency < min_latency) ? _latency : min_latency;
 		++it_event;
 	}
 
-	return min_interval;
+	interval = min_interval;
+	latency = min_latency;
 }
 
 unsigned int csensor_handle_info::get_reg_event_count(void)

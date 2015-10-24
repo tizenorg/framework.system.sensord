@@ -31,12 +31,13 @@ public:
 	virtual ~accel_sensor();
 
 	bool init();
-	virtual sensor_type_t get_type(void);
+	virtual void get_types(std::vector<sensor_type_t> &types);
 
 	static bool working(void *inst);
 	virtual bool set_interval(unsigned long interval);
-	virtual bool get_properties(sensor_properties_t &properties);
 	virtual int get_sensor_data(unsigned int type, sensor_data_t &data);
+	virtual bool get_properties(sensor_type_t sensor_type, sensor_properties_t &properties);
+
 private:
 	sensor_hal *m_sensor_hal;
 	cmutex m_value_mutex;
@@ -47,7 +48,6 @@ private:
 
 	virtual bool on_start(void);
 	virtual bool on_stop(void);
-
 	void raw_to_base(sensor_data_t &data);
 	bool process_event(void);
 };

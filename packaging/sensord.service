@@ -2,11 +2,16 @@
 Description=Sensor Daemon
 
 [Service]
+User=system
+Group=system
+SmackProcessLabel=sensord
 Type=notify
 ExecStart=/usr/bin/sensord
 Restart=always
 RestartSec=0
 MemoryLimit=20M
+Sockets=sensord.socket
+Sockets=sensord_event.socket
 
 [Install]
 WantedBy=multi-user.target

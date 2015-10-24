@@ -23,6 +23,9 @@
 #include <rv_raw_sensor.h>
 #include <sensor_plugin_loader.h>
 
+using std::string;
+using std::vector;
+
 #define SENSOR_NAME "RV_RAW_SENSOR"
 
 rv_raw_sensor::rv_raw_sensor()
@@ -43,7 +46,7 @@ rv_raw_sensor::~rv_raw_sensor()
 
 bool rv_raw_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(RV_RAW_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_RV_RAW);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -64,9 +67,9 @@ bool rv_raw_sensor::init()
 	return true;
 }
 
-sensor_type_t rv_raw_sensor::get_type(void)
+void rv_raw_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return RV_RAW_SENSOR;
+	types.push_back(RV_RAW_SENSOR);
 }
 
 bool rv_raw_sensor::working(void *inst)
@@ -116,7 +119,7 @@ bool rv_raw_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool rv_raw_sensor::get_properties(sensor_properties_t &properties)
+bool rv_raw_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }

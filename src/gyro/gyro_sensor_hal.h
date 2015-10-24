@@ -21,17 +21,14 @@
 #define _GYRO_SENSOR_HAL_H_
 
 #include <sensor_hal.h>
-#include <string>
-
-using std::string;
 
 class gyro_sensor_hal : public sensor_hal
 {
 public:
 	gyro_sensor_hal();
 	virtual ~gyro_sensor_hal();
-	string get_model_id(void);
-	sensor_type_t get_type(void);
+	std::string get_model_id(void);
+	sensor_hal_type_t get_type(void);
 	bool enable(void);
 	bool disable(void);
 	bool set_interval(unsigned long val);
@@ -44,9 +41,9 @@ private:
 	int m_y;
 	int m_z;
 
-	string m_model_id;
-	string m_vendor;
-	string m_chip_name;
+	std::string m_model_id;
+	std::string m_vendor;
+	std::string m_chip_name;
 
 	int m_node_handle;
 	unsigned long m_polling_interval;
@@ -57,9 +54,9 @@ private:
 	int m_resolution;
 	float m_raw_data_unit;
 
-	string m_data_node;
-	string m_enable_node;
-	string m_interval_node;
+	std::string m_data_node;
+	std::string m_enable_node;
+	std::string m_interval_node;
 
 	bool m_sensorhub_controlled;
 

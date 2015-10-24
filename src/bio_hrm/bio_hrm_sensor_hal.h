@@ -21,17 +21,14 @@
 #define _BIO_HRM_SENSOR_HAL_H_
 
 #include <sensor_hal.h>
-#include <string>
-
-using std::string;
 
 class bio_hrm_sensor_hal : public sensor_hal
 {
 public:
 	bio_hrm_sensor_hal();
 	virtual ~bio_hrm_sensor_hal();
-	sensor_type_t get_type(void);
-	string get_model_id(void);
+	sensor_hal_type_t get_type(void);
+	std::string get_model_id(void);
 	bool enable(void);
 	bool disable(void);
 	bool set_interval(unsigned long val);
@@ -39,14 +36,14 @@ public:
 	virtual int get_sensor_data(sensor_data_t &data);
 	bool get_properties(sensor_properties_t &properties);
 private:
-	string m_model_id;
-	string m_name;
-	string m_vendor;
-	string m_chip_name;
+	std::string m_model_id;
+	std::string m_name;
+	std::string m_vendor;
+	std::string m_chip_name;
 
-	string m_enable_node;
-	string m_data_node;
-	string m_interval_node;
+	std::string m_enable_node;
+	std::string m_data_node;
+	std::string m_interval_node;
 
 
 	int m_hr;

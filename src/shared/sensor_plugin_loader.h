@@ -21,6 +21,7 @@
 #define _SENSOR_PLUGIN_LOADER_CLASS_H_
 
 #include <sensor_common.h>
+#include <sensor_hal.h>
 
 #include <cmutex.h>
 #include <sstream>
@@ -29,20 +30,13 @@
 #include <vector>
 #include <map>
 #include <set>
-
+#include <memory>
 
 class sensor_hal;
 class sensor_base;
 class sensor_fusion;
 
-using std::pair;
-using std::vector;
-using std::multimap;
-using std::set;
-using std::string;
-using std::istringstream;
-
-typedef multimap<sensor_type_t, sensor_hal*> sensor_hal_plugins;
+typedef std::multimap<sensor_hal_type_t, std::shared_ptr<sensor_hal> > sensor_hal_plugins;
 /*
 * a hal_plugins is a group of hal plugin
 * <HAL>
@@ -51,7 +45,7 @@ typedef multimap<sensor_type_t, sensor_hal*> sensor_hal_plugins;
 *
 */
 
-typedef multimap<sensor_type_t, sensor_base*> sensor_plugins;
+typedef std::multimap<sensor_type_t, std::shared_ptr<sensor_base> > sensor_plugins;
 /*
 * a sensor_plugins is a group of sensor plugin
 * <SENSOR>
@@ -60,7 +54,7 @@ typedef multimap<sensor_type_t, sensor_base*> sensor_plugins;
 *
 */
 
-typedef vector<sensor_fusion*> fusion_plugins;
+typedef std::vector<std::shared_ptr<sensor_fusion> > fusion_plugins;
 
 class sensor_plugin_loader
 {
@@ -72,11 +66,11 @@ private:
 
 	sensor_plugin_loader();
 
-	bool load_module(const string &path, vector<void*> &sensors, void* &handle);
-	bool insert_module(plugin_type type, const string &path);
+	bool load_module(const std::string &path, std::vector<void*> &sensors, void* &handle);
+	bool insert_module(plugin_type type, const std::string &path);
 	void show_sensor_info(void);
-	bool get_paths_from_dir(const string &dir_path, vector<string> &hal_paths, vector<string> &sensor_paths);
-	bool get_paths_from_config(const string &config_path, vector<string> &hal_paths, vector<string> &sensor_paths);
+	bool get_paths_from_dir(const std::string &dir_path, std::vector<std::string> &hal_paths, std::vector<std::string> &sensor_paths);
+	bool get_paths_from_config(const std::string &config_path, std::vector<std::string> &hal_paths, std::vector<std::string> &sensor_paths);
 
 	sensor_hal_plugins m_sensor_hals;
 	sensor_plugins m_sensors;
@@ -86,19 +80,17 @@ public:
 	static sensor_plugin_loader& get_instance();
 	bool load_plugins(void);
 
-	sensor_hal* get_sensor_hal(sensor_type_t type);
-	vector<sensor_hal *> get_sensor_hals(sensor_type_t type);
+	sensor_hal* get_sensor_hal(sensor_hal_type_t type);
+	std::vector<sensor_hal *> get_sensor_hals(sensor_hal_type_t type);
 
 	sensor_base* get_sensor(sensor_type_t type);
-	vector<sensor_base *> get_sensors(sensor_type_t type);
+	std::vector<sensor_base *> get_sensors(sensor_type_t type);
 	sensor_base* get_sensor(sensor_id_t id);
 
-	vector<sensor_base*> get_virtual_sensors(void);
+	std::vector<sensor_base*> get_virtual_sensors(void);
 
 	sensor_fusion* get_fusion(void);
-	vector<sensor_fusion *> get_fusions(void);
-
-	bool destroy();
+	std::vector<sensor_fusion *> get_fusions(void);
 };
 #endif	/* _SENSOR_PLUGIN_LOADER_CLASS_H_ */
 

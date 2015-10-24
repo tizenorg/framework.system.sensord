@@ -19,9 +19,11 @@
 
 #include <sensor_info_manager.h>
 #include <utility>
+#include <vector>
 
 using std::pair;
 using std::make_pair;
+using std::vector;
 
 sensor_info_manager::sensor_info_manager()
 {

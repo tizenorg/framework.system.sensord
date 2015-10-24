@@ -1,0 +1,13 @@
+[Unit]
+Description=Sensor daemon event socket
+
+[Socket]
+SocketUser=system
+SocketGroup=system
+ListenSequentialPacket=/tmp/sensord_event_socket
+SocketMode=0777
+PassCredentials=yes
+Accept=false
+SmackLabelIPIn=*
+SmackLabelIPOut=@
+Service=sensord.service

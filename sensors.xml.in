@@ -206,6 +206,11 @@
 			<VENDOR value="MAXIM"/>
 		</MODEL>
 
+		<MODEL id="IMS1911">
+			<NAME value="IMS1911" />
+			<VENDOR value="ITM"/>
+		</MODEL>
+
 		<MODEL id="maru_sensor_proxi_1">
 			<NAME value="maru_sensor_proxi_1" />
 			<VENDOR value="Tizen_SDK"/>

@@ -27,8 +27,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include "common.h"
-#include <string>
-using std::string;
 
 class csocket {
 public:
@@ -47,7 +45,7 @@ public:
 	bool connect(const char *sock_path);
 
 	//Data Transfer
-	ssize_t send(void const* buffer, size_t size) const;
+	ssize_t send(const void *buffer, size_t size) const;
 	ssize_t recv(void* buffer, size_t size) const;
 
 	bool set_connection_mode(void);
@@ -66,8 +64,8 @@ private:
 	bool set_blocking_mode(bool blocking);
 	bool set_sock_type(void);
 
-	ssize_t send_for_seqpacket(void const* buffer, size_t size) const;
-	ssize_t send_for_stream(void const* buffer, size_t size) const;
+	ssize_t send_for_seqpacket(const void *buffer, size_t size) const;
+	ssize_t send_for_stream(const void *buffer, size_t size) const;
 	ssize_t recv_for_seqpacket(void* buffer, size_t size) const;
 	ssize_t recv_for_stream(void* buffer, size_t size) const;
 

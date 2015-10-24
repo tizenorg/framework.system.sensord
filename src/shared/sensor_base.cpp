@@ -20,6 +20,10 @@
 #include <sensor_base.h>
 
 #include <algorithm>
+#include <utility>
+
+using std::make_pair;
+using std::vector;
 
 #define UNKNOWN_NAME "UNKNOWN_SENSOR"
 
@@ -53,14 +57,30 @@ bool sensor_base::is_fusion(void)
 	return false;
 }
 
-void sensor_base::set_id(sensor_id_t id)
+void sensor_base::add_id(sensor_id_t id)
 {
-	m_id = id;
+	m_ids.insert(std::make_pair(static_cast<sensor_type_t> (id & SENSOR_TYPE_MASK), id));
 }
 
 sensor_id_t sensor_base::get_id(void)
 {
-	return m_id;
+	auto it = m_ids.begin();
+
+	if (it != m_ids.end())
+		return it->second;
+
+	return UNKNOWN_SENSOR;
+}
+
+sensor_id_t sensor_base::get_id(sensor_type_t sensor_type)
+{
+
+	auto it = m_ids.find(sensor_type);
+
+	if (it != m_ids.end())
+		return it->second;
+
+	return UNKNOWN_SENSOR;
 }
 
 sensor_privilege_t sensor_base::get_privilege(void)
@@ -82,12 +102,6 @@ void sensor_base::set_privilege(sensor_privilege_t privilege)
 void sensor_base::set_permission(int permission)
 {
 	m_permission = permission;
-}
-
-
-sensor_type_t sensor_base::get_type()
-{
-	return UNKNOWN_SENSOR;
 }
 
 const char* sensor_base::get_name()
@@ -210,7 +224,7 @@ bool sensor_base::add_interval(int client_id, unsigned int interval, bool is_pro
 	if (cur_min != prev_min) {
 		INFO("Min interval for sensor[0x%x] is changed from %dms to %dms"
 			" by%sclient[%d] adding interval",
-			get_type(), prev_min, cur_min,
+			get_id(), prev_min, cur_min,
 			is_processor ? " processor " : " ", client_id);
 		set_interval(cur_min);
 	}
@@ -233,14 +247,14 @@ bool sensor_base::delete_interval(int client_id, bool is_processor)
 	if (!cur_min) {
 		INFO("No interval for sensor[0x%x] by%sclient[%d] deleting interval, "
 			 "so set to default %dms",
-			 get_type(), is_processor ? " processor " : " ",
+			 get_id(), is_processor ? " processor " : " ",
 			 client_id, POLL_1HZ_MS);
 
 		set_interval(POLL_1HZ_MS);
 	} else if (cur_min != prev_min) {
 		INFO("Min interval for sensor[0x%x] is changed from %dms to %dms"
 			" by%sclient[%d] deleting interval",
-			get_type(), prev_min, cur_min,
+			get_id(), prev_min, cur_min,
 			is_processor ? " processor " : " ", client_id);
 
 		set_interval(cur_min);
@@ -256,13 +270,13 @@ unsigned int sensor_base::get_interval(int client_id, bool is_processor)
 	return m_interval_info_list.get_interval(client_id, is_processor);
 }
 
-void sensor_base::get_sensor_info(sensor_info &info)
+void sensor_base::get_sensor_info(sensor_type_t sensor_type, sensor_info &info)
 {
 	sensor_properties_t properties;
-	get_properties(properties);
+	get_properties(sensor_type, properties);
 
-	info.set_type(get_type());
-	info.set_id(get_id());
+	info.set_type(sensor_type);
+	info.set_id(get_id(sensor_type));
 	info.set_privilege(m_privilege);
 	info.set_name(properties.name.c_str());
 	info.set_vendor(properties.vendor.c_str());
@@ -272,12 +286,20 @@ void sensor_base::get_sensor_info(sensor_info &info)
 	info.set_min_interval(properties.min_interval);
 	info.set_fifo_count(properties.fifo_count);
 	info.set_max_batch_count(properties.max_batch_count);
-	info.set_supported_events(m_supported_event_info);
+
+	vector<unsigned int> events;
+
+	for (unsigned int i = 0; i < m_supported_event_info.size(); ++ i) {
+		if (m_supported_event_info[i] & (sensor_type << 16))
+			events.push_back(m_supported_event_info[i]);
+	}
+
+	info.set_supported_events(events);
 
 	return;
 }
 
-bool sensor_base::get_properties(sensor_properties_t &properties)
+bool sensor_base::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return false;
 }

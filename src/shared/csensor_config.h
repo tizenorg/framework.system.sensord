@@ -24,7 +24,7 @@
 
 #define SENSOR_CONFIG_FILE_PATH "/usr/etc/sensors.xml"
 
-typedef unordered_map<string,string> Element;
+typedef std::unordered_map<std::string,std::string> Element;
 /*
 * an Element  is a group of attributes
 * <Element value1 = "10.0", value2 =  "20.0"/>
@@ -33,7 +33,7 @@ typedef unordered_map<string,string> Element;
 *
 */
 
-typedef unordered_map<string,Element> Model;
+typedef std::unordered_map<std::string,Element> Model;
 /*
 * a Model is a group of elements to consist of  specific vendor's one sensor configuration
 * <NAME value = "LSM330DLC" />
@@ -45,7 +45,7 @@ typedef unordered_map<string,Element> Model;
 *
 */
 
-typedef unordered_map<string,Model> Model_list;
+typedef std::unordered_map<std::string,Model> Model_list;
 /*
 * a Model_list is  a group of Model
 * <MODEL id = "lsm330dlc_accel">
@@ -57,7 +57,7 @@ typedef unordered_map<string,Model> Model_list;
 *
 */
 
-typedef unordered_map<string,Model_list> Sensor_config;
+typedef std::unordered_map<std::string,Model_list> Sensor_config;
 /*
 * a SensorConfig represents sensors.xml
 * <ACCEL/>
@@ -75,21 +75,21 @@ private:
 	csensor_config(csensor_config const&) {};
 	csensor_config& operator=(csensor_config const&);
 
-	bool load_config(const string& config_path);
+	bool load_config(const std::string& config_path);
 
 	Sensor_config m_sensor_config;
 public:
 	static csensor_config& get_instance(void);
 
-	bool get(const string& sensor_type, const string& model_id, const string& element, const string& attr, string& value);
-	bool get(const string& sensor_type, const string& model_id, const string& element, const string& attr, double& value);
-	bool get(const string& sensor_type, const string& model_id, const string& element, const string& attr, long& value);
+	bool get(const std::string& sensor_type, const std::string& model_id, const std::string& element, const std::string& attr, std::string& value);
+	bool get(const std::string& sensor_type, const std::string& model_id, const std::string& element, const std::string& attr, double& value);
+	bool get(const std::string& sensor_type, const std::string& model_id, const std::string& element, const std::string& attr, long& value);
 
-	bool get(const string& sensor_type, const string& model_id, const string& element, string& value);
-	bool get(const string& sensor_type, const string& model_id, const string& element, double& value);
-	bool get(const string& sensor_type, const string& model_id, const string& element, long& value);
+	bool get(const std::string& sensor_type, const std::string& model_id, const std::string& element, std::string& value);
+	bool get(const std::string& sensor_type, const std::string& model_id, const std::string& element, double& value);
+	bool get(const std::string& sensor_type, const std::string& model_id, const std::string& element, long& value);
 
-	bool is_supported(const string &sensor_type, const string &model_id);
+	bool is_supported(const std::string &sensor_type, const std::string &model_id);
 };
 
 #endif

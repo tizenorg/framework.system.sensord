@@ -35,12 +35,12 @@ public:
 	virtual ~context_sensor();
 
 	virtual bool init();
-	virtual sensor_type_t get_type(void);
+	virtual void get_types(std::vector<sensor_type_t> &types);
 
 	static bool working(void *inst);
 
-	virtual bool get_properties(sensor_properties_t &properties);
 	virtual int send_sensorhub_data(const char* data, int data_len);
+	virtual bool get_properties(sensor_type_t sensor_type, sensor_properties_t &properties);
 private:
 	sensor_hal *m_sensor_hal;
 

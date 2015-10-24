@@ -24,11 +24,6 @@
 #include <mutex>
 #include <condition_variable>
 
-using std::mutex;
-using std::lock_guard;
-using std::unique_lock;
-using std::condition_variable;
-
 class worker_thread
 {
 public:
@@ -50,13 +45,13 @@ private:
 		TRANS_FUNC_CNT,
 	};
 
-	typedef lock_guard<mutex>  lock;
-	typedef unique_lock<mutex> ulock;
+	typedef std::lock_guard<std::mutex>  lock;
+	typedef std::unique_lock<std::mutex> ulock;
 
 	worker_state_t m_state;
 	void *m_context;
-	mutex m_mutex;
-	condition_variable m_cond_working;
+	std::mutex m_mutex;
+	std::condition_variable m_cond_working;
 	bool m_thread_created;
 
 	trans_func_t m_trans_func[TRANS_FUNC_CNT];

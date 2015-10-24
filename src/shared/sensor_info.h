@@ -25,10 +25,7 @@
 #include <string>
 #include <vector>
 
-using std::string;
-using std::vector;
-
-typedef vector<char> raw_data_t;
+typedef std::vector<char> raw_data_t;
 typedef raw_data_t::iterator raw_data_iterator;
 
 class sensor_info
@@ -45,7 +42,7 @@ public:
 	int get_min_interval(void);
 	int get_fifo_count(void);
 	int get_max_batch_count(void);
-	void get_supported_events(vector<unsigned int> &events);
+	void get_supported_events(std::vector<unsigned int> &events);
 	bool is_supported_event(unsigned int event);
 
 	void set_type(sensor_type_t type);
@@ -60,7 +57,7 @@ public:
 	void set_fifo_count(int fifo_count);
 	void set_max_batch_count(int max_batch_count);
 	void register_supported_event(unsigned int event);
-	void set_supported_events(vector<unsigned int> &events);
+	void set_supported_events(std::vector<unsigned int> &events);
 
 	void clear(void);
 
@@ -71,25 +68,25 @@ private:
 	sensor_type_t m_type;
 	sensor_id_t m_id;
 	sensor_privilege_t m_privilege;
-	string m_name;
-	string m_vendor;
+	std::string m_name;
+	std::string m_vendor;
 	float m_min_range;
 	float m_max_range;
 	float m_resolution;
 	int m_min_interval;
 	int m_fifo_count;
 	int m_max_batch_count;
-	vector<unsigned int> m_supported_events;
+	std::vector<unsigned int> m_supported_events;
 
 	void put(raw_data_t &data, int value);
 	void put(raw_data_t &data, float value);
-	void put(raw_data_t &data, string &value);
-	void put(raw_data_t &data, vector<unsigned int> &value);
+	void put(raw_data_t &data, std::string &value);
+	void put(raw_data_t &data, std::vector<unsigned int> &value);
 
 	raw_data_iterator get(raw_data_iterator it, int &value);
 	raw_data_iterator get(raw_data_iterator it, float &value);
-	raw_data_iterator get(raw_data_iterator it, string &value);
-	raw_data_iterator get(raw_data_iterator it, vector<unsigned int> &value);
+	raw_data_iterator get(raw_data_iterator it, std::string &value);
+	raw_data_iterator get(raw_data_iterator it, std::vector<unsigned int> &value);
 };
 
 #endif /* _SENSOR_INFO_H_ */

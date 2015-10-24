@@ -50,7 +50,13 @@ EXTAPI void sf_log(int type , int priority , const char *tag , const char *fmt ,
 			sf_debug_file_fd = open(SF_SERVER_MSG_LOG_FILE, O_WRONLY|O_CREAT|O_APPEND, 0644);
 			if (sf_debug_file_fd != -1) {
 				vsnprintf(sf_debug_file_buf,255, fmt , ap );
-				write(sf_debug_file_fd, sf_debug_file_buf, strlen(sf_debug_file_buf));
+				int total_bytes_written = 0;
+				while (total_bytes_written < (int) strlen(sf_debug_file_buf)){
+					int bytes_written = write(sf_debug_file_fd, (sf_debug_file_buf + total_bytes_written), strlen(sf_debug_file_buf) - total_bytes_written);
+					if (bytes_written == -1)
+						break;
+					total_bytes_written = total_bytes_written + bytes_written;
+				}
 				close(sf_debug_file_fd);
 			}
 			break;
@@ -107,6 +113,7 @@ EXTAPI void sf_log(int type , int priority , const char *tag , const char *fmt ,
 	va_end(ap);
 }
 
+#if defined(_DEBUG)
 bool get_proc_name(pid_t pid, char *process_name)
 {
 	FILE *fp;
@@ -125,10 +132,26 @@ bool get_proc_name(pid_t pid, char *process_name)
 	}
 
 	strncpy(process_name, buf, NAME_MAX-1);
+	process_name[NAME_MAX-1] = '\0';
 	fclose(fp);
 
 	return true;
 }
+#else
+bool get_proc_name(pid_t pid, char *process_name)
+{
+	char buf[NAME_MAX];
+
+	if (sprintf(buf, "%d process", pid) < 1) {
+		return false;
+	}
+
+	strncpy(process_name, buf, NAME_MAX-1);
+	process_name[NAME_MAX-1] = '\0';
+
+	return true;
+}
+#endif
 
 const char* get_client_name(void)
 {

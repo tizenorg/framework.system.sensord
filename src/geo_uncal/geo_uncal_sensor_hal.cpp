@@ -1,5 +1,5 @@
 /*
- * uncal_geo_sensor_hal
+ * geo_uncal_sensor_hal
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  *
@@ -21,13 +21,14 @@
 #include <dirent.h>
 #include <linux/input.h>
 #include <csensor_config.h>
-#include <uncal_geo_sensor_hal.h>
+#include <geo_uncal_sensor_hal.h>
 #include <sys/ioctl.h>
 #include <fstream>
 
 using std::ifstream;
+using std::string;
 
-#define SENSOR_TYPE_UNCAL_MAGNETIC	"MAGNETIC"
+#define SENSOR_TYPE_MAGNETIC_UNCAL	"MAGNETIC"
 #define ELEMENT_NAME			"NAME"
 #define ELEMENT_VENDOR			"VENDOR"
 #define ELEMENT_RAW_DATA_UNIT	"RAW_DATA_UNIT"
@@ -35,7 +36,7 @@ using std::ifstream;
 #define ELEMENT_MAX_RANGE		"MAX_RANGE"
 #define ATTR_VALUE				"value"
 
-uncal_geo_sensor_hal::uncal_geo_sensor_hal()
+geo_uncal_sensor_hal::geo_uncal_sensor_hal()
 : m_x(0)
 , m_y(0)
 , m_z(0)
@@ -52,14 +53,14 @@ uncal_geo_sensor_hal::uncal_geo_sensor_hal()
 	node_info_query query;
 	node_info info;
 
-	if (!find_model_id(SENSOR_TYPE_UNCAL_MAGNETIC, m_model_id)) {
+	if (!find_model_id(SENSOR_TYPE_MAGNETIC_UNCAL, m_model_id)) {
 		ERR("Failed to find model id");
 		throw ENXIO;
 
 	}
 
 	query.sensorhub_controlled = m_sensorhub_controlled = is_sensorhub_controlled(sensorhub_interval_node_name);
-	query.sensor_type = SENSOR_TYPE_UNCAL_MAGNETIC;
+	query.sensor_type = SENSOR_TYPE_MAGNETIC_UNCAL;
 	query.key = "uncal_geomagnetic_sensor";
 	query.iio_enable_node_name = "uncal_geomagnetic_enable";
 	query.sensorhub_interval_node_name = sensorhub_interval_node_name;
@@ -75,14 +76,14 @@ uncal_geo_sensor_hal::uncal_geo_sensor_hal()
 	m_enable_node = info.enable_node_path;
 	m_interval_node = info.interval_node_path;
 
-	if (!config.get(SENSOR_TYPE_UNCAL_MAGNETIC, m_model_id, ELEMENT_VENDOR, m_vendor)) {
+	if (!config.get(SENSOR_TYPE_MAGNETIC_UNCAL, m_model_id, ELEMENT_VENDOR, m_vendor)) {
 		ERR("[VENDOR] is empty\n");
 		throw ENXIO;
 	}
 
 	INFO("m_vendor = %s", m_vendor.c_str());
 
-	if (!config.get(SENSOR_TYPE_UNCAL_MAGNETIC, m_model_id, ELEMENT_NAME, m_chip_name)) {
+	if (!config.get(SENSOR_TYPE_MAGNETIC_UNCAL, m_model_id, ELEMENT_NAME, m_chip_name)) {
 		ERR("[NAME] is empty\n");
 		throw ENXIO;
 	}
@@ -91,7 +92,7 @@ uncal_geo_sensor_hal::uncal_geo_sensor_hal()
 
 	double min_range;
 
-	if (!config.get(SENSOR_TYPE_UNCAL_MAGNETIC, m_model_id, ELEMENT_MIN_RANGE, min_range)) {
+	if (!config.get(SENSOR_TYPE_MAGNETIC_UNCAL, m_model_id, ELEMENT_MIN_RANGE, min_range)) {
 		ERR("[MIN_RANGE] is empty\n");
 		throw ENXIO;
 	}
@@ -101,7 +102,7 @@ uncal_geo_sensor_hal::uncal_geo_sensor_hal()
 
 	double max_range;
 
-	if (!config.get(SENSOR_TYPE_UNCAL_MAGNETIC, m_model_id, ELEMENT_MAX_RANGE, max_range)) {
+	if (!config.get(SENSOR_TYPE_MAGNETIC_UNCAL, m_model_id, ELEMENT_MAX_RANGE, max_range)) {
 		ERR("[MAX_RANGE] is empty\n");
 		throw ENXIO;
 	}
@@ -111,7 +112,7 @@ uncal_geo_sensor_hal::uncal_geo_sensor_hal()
 
 	double raw_data_unit;
 
-	if (!config.get(SENSOR_TYPE_UNCAL_MAGNETIC, m_model_id, ELEMENT_RAW_DATA_UNIT, raw_data_unit)) {
+	if (!config.get(SENSOR_TYPE_MAGNETIC_UNCAL, m_model_id, ELEMENT_RAW_DATA_UNIT, raw_data_unit)) {
 		ERR("[RAW_DATA_UNIT] is empty\n");
 		throw ENXIO;
 	}
@@ -128,29 +129,29 @@ uncal_geo_sensor_hal::uncal_geo_sensor_hal()
 		ERR("Fail to set monotonic timestamp for %s", m_data_node.c_str());
 
 	INFO("m_raw_data_unit = %f\n", m_raw_data_unit);
-	INFO("uncal_geo_sensor_hal is created!\n");
+	INFO("geo_uncal_sensor_hal is created!\n");
 
 }
 
-uncal_geo_sensor_hal::~uncal_geo_sensor_hal()
+geo_uncal_sensor_hal::~geo_uncal_sensor_hal()
 {
 	close(m_node_handle);
 	m_node_handle = -1;
 
-	INFO("uncal_geo_sensor is destroyed!\n");
+	INFO("geo_uncal_sensor is destroyed!\n");
 }
 
-string uncal_geo_sensor_hal::get_model_id(void)
+string geo_uncal_sensor_hal::get_model_id(void)
 {
 	return m_model_id;
 }
 
-sensor_type_t uncal_geo_sensor_hal::get_type(void)
+sensor_hal_type_t geo_uncal_sensor_hal::get_type(void)
 {
-	return UNCAL_GEOMAGNETIC_SENSOR;
+	return SENSOR_HAL_TYPE_GEOMAGNETIC_UNCAL;
 }
 
-bool uncal_geo_sensor_hal::enable(void)
+bool geo_uncal_sensor_hal::enable(void)
 {
 	AUTOLOCK(m_mutex);
 
@@ -162,7 +163,7 @@ bool uncal_geo_sensor_hal::enable(void)
 	return true;
 }
 
-bool uncal_geo_sensor_hal::disable(void)
+bool geo_uncal_sensor_hal::disable(void)
 {
 	AUTOLOCK(m_mutex);
 
@@ -172,7 +173,7 @@ bool uncal_geo_sensor_hal::disable(void)
 	return true;
 }
 
-bool uncal_geo_sensor_hal::set_interval(unsigned long val)
+bool geo_uncal_sensor_hal::set_interval(unsigned long val)
 {
 	unsigned long long polling_interval_ns;
 
@@ -191,9 +192,9 @@ bool uncal_geo_sensor_hal::set_interval(unsigned long val)
 
 }
 
-bool uncal_geo_sensor_hal::update_value(bool wait)
+bool geo_uncal_sensor_hal::update_value(bool wait)
 {
-	int uncal_geo_raw[6] = {0,};
+	int geo_uncal_raw[6] = {0,};
 	bool x,y,z,x_offset,y_offset,z_offset;
 	int read_input_cnt = 0;
 	const int INPUT_MAX_BEFORE_SYN = 10;
@@ -202,54 +203,54 @@ bool uncal_geo_sensor_hal::update_value(bool wait)
 
 	x = y = z = x_offset = y_offset = z_offset = false;
 
-	struct input_event uncal_geoinput;
+	struct input_event geo_uncal_input;
 	DBG("uncal geo event detection!");
 
 	while ((syn == false) && (read_input_cnt < INPUT_MAX_BEFORE_SYN)) {
-		int len = read(m_node_handle, &uncal_geoinput, sizeof(uncal_geoinput));
-		if (len != sizeof(uncal_geoinput)) {
-			ERR("uncal_geofile read fail, read_len = %d\n",len);
+		int len = read(m_node_handle, &geo_uncal_input, sizeof(geo_uncal_input));
+		if (len != sizeof(geo_uncal_input)) {
+			ERR("geo_uncal_input read fail, read_len = %d\n",len);
 			return false;
 		}
 
 		++read_input_cnt;
 
-		if (uncal_geoinput.type == EV_REL) {
-			switch (uncal_geoinput.code) {
+		if (geo_uncal_input.type == EV_REL) {
+			switch (geo_uncal_input.code) {
 				case REL_RX:
-					uncal_geo_raw[0] = (int)uncal_geoinput.value;
+					geo_uncal_raw[0] = (int)geo_uncal_input.value;
 					x = true;
 					break;
 				case REL_RY:
-					uncal_geo_raw[1] = (int)uncal_geoinput.value;
+					geo_uncal_raw[1] = (int)geo_uncal_input.value;
 					y = true;
 					break;
 				case REL_RZ:
-					uncal_geo_raw[2] = (int)uncal_geoinput.value;
+					geo_uncal_raw[2] = (int)geo_uncal_input.value;
 					z = true;
 					break;
 				case REL_HWHEEL:
-					uncal_geo_raw[3] = (int)uncal_geoinput.value;
+					geo_uncal_raw[3] = (int)geo_uncal_input.value;
 					x_offset= true;
 					break;
 				case REL_DIAL:
-					uncal_geo_raw[4] = (int)uncal_geoinput.value;
+					geo_uncal_raw[4] = (int)geo_uncal_input.value;
 					y_offset= true;
 					break;
 				case REL_WHEEL:
-					uncal_geo_raw[5] = (int)uncal_geoinput.value;
+					geo_uncal_raw[5] = (int)geo_uncal_input.value;
 					z_offset= true;
 					break;
 				default:
-					ERR("uncal_geoinput event[type = %d, code = %d] is unknown.", uncal_geoinput.type, uncal_geoinput.code);
+					ERR("geo_uncal_input event[type = %d, code = %d] is unknown.", geo_uncal_input.type, geo_uncal_input.code);
 					return false;
 					break;
 			}
-		} else if (uncal_geoinput.type == EV_SYN) {
+		} else if (geo_uncal_input.type == EV_SYN) {
 			syn = true;
-			fired_time = get_timestamp(&uncal_geoinput.time);
+			fired_time = get_timestamp(&geo_uncal_input.time);
 		} else {
-			ERR("uncal_geoinput event[type = %d, code = %d] is unknown.", uncal_geoinput.type, uncal_geoinput.code);
+			ERR("geo_uncal_input event[type = %d, code = %d] is unknown.", geo_uncal_input.type, geo_uncal_input.code);
 			return false;
 		}
 	}
@@ -257,17 +258,17 @@ bool uncal_geo_sensor_hal::update_value(bool wait)
 	AUTOLOCK(m_value_mutex);
 
 	if (x)
-		m_x =  uncal_geo_raw[0];
+		m_x =  geo_uncal_raw[0];
 	if (y)
-		m_y =  uncal_geo_raw[1];
+		m_y =  geo_uncal_raw[1];
 	if (z)
-		m_z =  uncal_geo_raw[2];
+		m_z =  geo_uncal_raw[2];
 	if (x_offset)
-		m_x_offset=  uncal_geo_raw[3];
+		m_x_offset=  geo_uncal_raw[3];
 	if (y_offset)
-		m_y_offset=  uncal_geo_raw[4];
+		m_y_offset=  geo_uncal_raw[4];
 	if (z_offset)
-		m_z_offset=  uncal_geo_raw[5];
+		m_z_offset=  geo_uncal_raw[5];
 
 
 	m_fired_time = fired_time;
@@ -278,14 +279,14 @@ bool uncal_geo_sensor_hal::update_value(bool wait)
 }
 
 
-bool uncal_geo_sensor_hal::is_data_ready(bool wait)
+bool geo_uncal_sensor_hal::is_data_ready(bool wait)
 {
 	bool ret;
 	ret = update_value(wait);
 	return ret;
 }
 
-int uncal_geo_sensor_hal::get_sensor_data(sensor_data_t &data)
+int geo_uncal_sensor_hal::get_sensor_data(sensor_data_t &data)
 {
 	data.accuracy = SENSOR_ACCURACY_GOOD;
 	data.timestamp = m_fired_time;
@@ -299,7 +300,7 @@ int uncal_geo_sensor_hal::get_sensor_data(sensor_data_t &data)
 	return 0;
 }
 
-bool uncal_geo_sensor_hal::get_properties(sensor_properties_t &properties)
+bool geo_uncal_sensor_hal::get_properties(sensor_properties_t &properties)
 {
 	properties.name = m_chip_name;
 	properties.vendor = m_vendor;
@@ -314,10 +315,10 @@ bool uncal_geo_sensor_hal::get_properties(sensor_properties_t &properties)
 
 extern "C" sensor_module* create(void)
 {
-	uncal_geo_sensor_hal *sensor;
+	geo_uncal_sensor_hal *sensor;
 
 	try {
-		sensor = new(std::nothrow) uncal_geo_sensor_hal;
+		sensor = new(std::nothrow) geo_uncal_sensor_hal;
 	} catch (int err) {
 		ERR("Failed to create module, err: %d, cause: %s", err, strerror(err));
 		return NULL;

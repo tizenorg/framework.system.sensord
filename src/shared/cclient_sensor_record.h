@@ -25,10 +25,9 @@
 #include <csensor_usage.h>
 #include <csocket.h>
 #include <unordered_map>
+#include <string>
 
-using std::unordered_map;
-
-typedef unordered_map<sensor_id_t, csensor_usage> sensor_usage_map;
+typedef std::unordered_map<sensor_id_t, csensor_usage> sensor_usage_map;
 
 class cclient_sensor_record {
 public:
@@ -37,7 +36,7 @@ public:
 
 	void set_client_id(int client_id);
 
-	void set_client_info(pid_t pid);
+	void set_client_info(pid_t pid, const std::string &name);
 	const char* get_client_info(void);
 
 	void set_permission(int permission);
@@ -46,8 +45,8 @@ public:
 	bool register_event(sensor_id_t sensor_id, unsigned int event_type);
 	bool unregister_event(sensor_id_t sensor_id, unsigned int event_type);
 
-	bool set_interval(sensor_id_t sensor_id, unsigned int interval);
-	unsigned int get_interval(sensor_id_t sensor_id);
+	bool set_batch(sensor_id_t sensor_id, unsigned int interval, unsigned int latency);
+	bool get_batch(sensor_id_t sensor_id, unsigned int &interval, unsigned int &latency);
 	bool set_option(sensor_id_t sensor_id, int option);
 
 	bool set_start(sensor_id_t sensor_id, bool start);
@@ -70,7 +69,7 @@ private:
 	int m_client_id;
 	pid_t m_pid;
 	int m_permission;
-	string m_client_info;
+	std::string m_client_info;
 	csocket m_event_socket;
 	sensor_usage_map m_sensor_usages;
 };

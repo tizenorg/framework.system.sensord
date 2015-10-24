@@ -20,34 +20,33 @@
 #include <common.h>
 #include <sf_common.h>
 
-#include <uncal_gyro_sensor.h>
+#include <geo_uncal_sensor.h>
 #include <sensor_plugin_loader.h>
 
-#define MS_TO_US 1000
-#define DPS_TO_MDPS 1000
-#define RAW_DATA_TO_DPS_UNIT(X) ((float)(X)/((float)DPS_TO_MDPS))
+using std::vector;
+using std::string;
 
-#define SENSOR_NAME "UNCAL_GYROSCOPE_SENSOR"
+#define SENSOR_NAME "GEOMAGNETIC_UNCAL_SENSOR"
 
-uncal_gyro_sensor::uncal_gyro_sensor()
+geo_uncal_sensor::geo_uncal_sensor()
 : m_sensor_hal(NULL)
 , m_resolution(0.0f)
 {
 	m_name = string(SENSOR_NAME);
 
-	register_supported_event(UNCAL_GYROSCOPE_EVENT_RAW_DATA_REPORT_ON_TIME);
+	register_supported_event(GEOMAGNETIC_UNCAL_EVENT_RAW_DATA_REPORT_ON_TIME);
 
-	physical_sensor::set_poller(uncal_gyro_sensor::working, this);
+	physical_sensor::set_poller(geo_uncal_sensor::working, this);
 }
 
-uncal_gyro_sensor::~uncal_gyro_sensor()
+geo_uncal_sensor::~geo_uncal_sensor()
 {
-	INFO("uncal_gyro_sensor is destroyed!\n");
+	INFO("geo_uncal_sensor is destroyed!\n");
 }
 
-bool uncal_gyro_sensor::init()
+bool geo_uncal_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(UNCAL_GYROSCOPE_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_GEOMAGNETIC_UNCAL);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -68,31 +67,31 @@ bool uncal_gyro_sensor::init()
 	return true;
 }
 
-sensor_type_t uncal_gyro_sensor::get_type(void)
+void geo_uncal_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return UNCAL_GYROSCOPE_SENSOR;
+	types.push_back(GEOMAGNETIC_UNCAL_SENSOR);
 }
 
-bool uncal_gyro_sensor::working(void *inst)
+bool geo_uncal_sensor::working(void *inst)
 {
-	uncal_gyro_sensor *sensor = (uncal_gyro_sensor*)inst;
+	geo_uncal_sensor *sensor = (geo_uncal_sensor*)inst;
 	return sensor->process_event();;
 }
 
-bool uncal_gyro_sensor::process_event(void)
+bool geo_uncal_sensor::process_event(void)
 {
 	sensor_event_t event;
 
-	if (m_sensor_hal->is_data_ready(true) == false)
+	if (!m_sensor_hal->is_data_ready(true))
 		return true;
 
 	m_sensor_hal->get_sensor_data(event.data);
 
 	AUTOLOCK(m_client_info_mutex);
 
-	if (get_client_cnt(UNCAL_GYROSCOPE_EVENT_RAW_DATA_REPORT_ON_TIME)) {
+	if (get_client_cnt(GEOMAGNETIC_UNCAL_EVENT_RAW_DATA_REPORT_ON_TIME)) {
 		event.sensor_id = get_id();
-		event.event_type = UNCAL_GYROSCOPE_EVENT_RAW_DATA_REPORT_ON_TIME;
+		event.event_type = GEOMAGNETIC_UNCAL_EVENT_RAW_DATA_REPORT_ON_TIME;
 		raw_to_base(event.data);
 		push(event);
 	}
@@ -100,7 +99,7 @@ bool uncal_gyro_sensor::process_event(void)
 	return true;
 }
 
-bool uncal_gyro_sensor::on_start(void)
+bool geo_uncal_sensor::on_start(void)
 {
 	if (!m_sensor_hal->enable()) {
 		ERR("m_sensor_hal start fail\n");
@@ -110,7 +109,7 @@ bool uncal_gyro_sensor::on_start(void)
 	return start_poll();
 }
 
-bool uncal_gyro_sensor::on_stop(void)
+bool geo_uncal_sensor::on_stop(void)
 {
 	if (!m_sensor_hal->disable()) {
 		ERR("m_sensor_hal stop fail\n");
@@ -120,31 +119,30 @@ bool uncal_gyro_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool uncal_gyro_sensor::get_properties(sensor_properties_t &properties)
+bool geo_uncal_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }
 
-int uncal_gyro_sensor::get_sensor_data(unsigned int type, sensor_data_t &data)
+int geo_uncal_sensor::get_sensor_data(unsigned int type, sensor_data_t &data)
 {
 	int state;
 
-	if (type != UNCAL_GYRO_BASE_DATA_SET)
+	if (type != GEOMAGNETIC_UNCAL_BASE_DATA_SET)
 		return -1;
 
 	state = m_sensor_hal->get_sensor_data(data);
+	raw_to_base(data);
 
 	if (state < 0) {
 		ERR("m_sensor_hal get struct_data fail\n");
 		return -1;
 	}
 
-	raw_to_base(data);
-
 	return 0;
 }
 
-bool uncal_gyro_sensor::set_interval(unsigned long interval)
+bool geo_uncal_sensor::set_interval(unsigned long interval)
 {
 	AUTOLOCK(m_mutex);
 
@@ -153,7 +151,7 @@ bool uncal_gyro_sensor::set_interval(unsigned long interval)
 	return m_sensor_hal->set_interval(interval);
 }
 
-void uncal_gyro_sensor::raw_to_base(sensor_data_t &data)
+void geo_uncal_sensor::raw_to_base(sensor_data_t &data)
 {
 	data.value_count = 6;
 	data.values[0] = data.values[0] * m_resolution;
@@ -166,10 +164,10 @@ void uncal_gyro_sensor::raw_to_base(sensor_data_t &data)
 
 extern "C" sensor_module* create(void)
 {
-	uncal_gyro_sensor *sensor;
+	geo_uncal_sensor *sensor;
 
 	try {
-		sensor = new(std::nothrow) uncal_gyro_sensor;
+		sensor = new(std::nothrow) geo_uncal_sensor;
 	} catch (int err) {
 		ERR("Failed to create module, err: %d, cause: %s", err, strerror(err));
 		return NULL;
@@ -181,4 +179,3 @@ extern "C" sensor_module* create(void)
 	module->sensors.push_back(sensor);
 	return module;
 }
-

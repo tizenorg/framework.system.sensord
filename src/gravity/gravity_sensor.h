@@ -29,15 +29,15 @@ public:
 	virtual ~gravity_sensor();
 
 	bool init();
-	sensor_type_t get_type(void);
+	virtual void get_types(std::vector<sensor_type_t> &types);
 
-	void synthesize(const sensor_event_t &event, vector<sensor_event_t> &outs);
+	void synthesize(const sensor_event_t& event, std::vector<sensor_event_t> &outs);
 
 	bool add_interval(int client_id, unsigned int interval, bool is_processor);
 	bool delete_interval(int client_id, bool is_processor);
 
 	int get_sensor_data(unsigned int data_id, sensor_data_t &data);
-	bool get_properties(sensor_properties_t &properties);
+	virtual bool get_properties(sensor_type_t sensor_type, sensor_properties_t &properties);
 private:
 	sensor_base *m_orientation_sensor;
 	cmutex m_value_mutex;
@@ -49,9 +49,9 @@ private:
 	unsigned long long m_time;
 	unsigned int m_interval;
 
-	string m_vendor;
-	string m_raw_data_unit;
-	string m_orientation_data_unit;
+	std::string m_vendor;
+	std::string m_raw_data_unit;
+	std::string m_orientation_data_unit;
 	int m_default_sampling_time;
 	int m_gravity_sign_compensation[3];
 

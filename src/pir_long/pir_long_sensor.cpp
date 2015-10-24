@@ -23,6 +23,9 @@
 #include <pir_long_sensor.h>
 #include <sensor_plugin_loader.h>
 
+using std::string;
+using std::vector;
+
 #define SENSOR_NAME "PIR_LONG_SENSOR"
 
 pir_long_sensor::pir_long_sensor()
@@ -43,7 +46,7 @@ pir_long_sensor::~pir_long_sensor()
 
 bool pir_long_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(PIR_LONG_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_PIR_LONG);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -54,9 +57,9 @@ bool pir_long_sensor::init()
 	return true;
 }
 
-sensor_type_t pir_long_sensor::get_type(void)
+void pir_long_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return PIR_LONG_SENSOR;
+	types.push_back(PIR_LONG_SENSOR);
 }
 
 bool pir_long_sensor::working(void *inst)
@@ -106,7 +109,7 @@ bool pir_long_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool pir_long_sensor::get_properties(sensor_properties_t &properties)
+bool pir_long_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }

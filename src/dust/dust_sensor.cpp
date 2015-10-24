@@ -23,6 +23,9 @@
 #include <dust_sensor.h>
 #include <sensor_plugin_loader.h>
 
+using std::string;
+using std::vector;
+
 #define SENSOR_NAME "DUST_SENSOR"
 
 dust_sensor::dust_sensor()
@@ -43,7 +46,7 @@ dust_sensor::~dust_sensor()
 
 bool dust_sensor::init()
 {
-	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(DUST_SENSOR);
+	m_sensor_hal = sensor_plugin_loader::get_instance().get_sensor_hal(SENSOR_HAL_TYPE_DUST);
 
 	if (!m_sensor_hal) {
 		ERR("cannot load sensor_hal[%s]", sensor_base::get_name());
@@ -65,9 +68,9 @@ bool dust_sensor::init()
 	return true;
 }
 
-sensor_type_t dust_sensor::get_type(void)
+void dust_sensor::get_types(vector<sensor_type_t> &types)
 {
-	return DUST_SENSOR;
+	types.push_back(DUST_SENSOR);
 }
 
 bool dust_sensor::working(void *inst)
@@ -118,7 +121,7 @@ bool dust_sensor::on_stop(void)
 	return stop_poll();
 }
 
-bool dust_sensor::get_properties(sensor_properties_t &properties)
+bool dust_sensor::get_properties(sensor_type_t sensor_type, sensor_properties_t &properties)
 {
 	return m_sensor_hal->get_properties(properties);
 }
