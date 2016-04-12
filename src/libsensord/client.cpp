@@ -32,7 +32,7 @@
 #define API __attribute__((visibility("default")))
 #endif
 
-#define MIN_INTERVAL 10
+#define DEFAULT_INTERVAL POLL_10HZ_MS
 
 static const int OP_SUCCESS = 0;
 static const int OP_ERROR =  -1;
@@ -751,8 +751,8 @@ static bool register_event(int handle, unsigned int event_type, unsigned int int
 		return false;
 	}
 
-	if (interval < MIN_INTERVAL)
-		interval = MIN_INTERVAL;
+	if (interval == 0)
+		interval = DEFAULT_INTERVAL;
 
 	INFO("%s registers event %s[0x%x] for sensor %s[%d] with interval: %d, cb: 0x%x, user_data: 0x%x", get_client_name(), get_event_name(event_type),
 			event_type, get_sensor_name(sensor_id), handle, interval, cb, user_data);
@@ -963,8 +963,8 @@ API bool sensord_change_event_interval(int handle, unsigned int event_type, unsi
 
 	event_listener.get_event_info(handle, event_type, prev_interval, prev_cb_type, prev_cb, prev_user_data);
 
-	if (interval < MIN_INTERVAL)
-		interval = MIN_INTERVAL;
+	if (interval == 0)
+		interval = DEFAULT_INTERVAL;
 
 	if (!event_listener.set_event_interval(handle, event_type, interval))
 		return false;
