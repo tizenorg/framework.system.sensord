@@ -90,6 +90,33 @@ bool sensord_get_sensor_list(sensor_type_t type, sensor_t **list, int *sensor_co
 sensor_t sensord_get_sensor(sensor_type_t type);
 
 /**
+ * @brief Get the list of available sensors of a certain type,  use ALL_SENSOR to get all the sensors.
+ *
+ * @param[in] type the type of sensors requested.
+ * @param[out] list the list of sensors matching the asked type,  the caller should explicitly free this list.
+ * @param[out] sensor count the count of sensors contained in the list.
+ * @return 0 on success, otherwise a negative error value
+ * @retval 0 Successful
+ * @retval -EIO I/O Error
+ * @retval -EACCES Permission denied
+ * @retval -ENODATA NO sensor available
+ */
+int sensord_get_sensors(sensor_type_t type, sensor_t **list, int *sensor_count);
+
+/**
+ * @brief Get the default sensor for a given type.
+ *
+ * @param[in] type the type of a sensor requested.
+ * @param[out] a sensor matching the asked type.
+ * @return 0 on success, otherwise a negative error value
+ * @retval 0 Successful
+ * @retval -EIO I/O Error
+ * @retval -EACCES Permission denied
+ * @retval -ENODATA NO sensor available
+ */
+int sensord_get_default_sensor(sensor_type_t type, sensor_t *sensor);
+
+/**
  * @brief Get the type of this sensor.
  *
  * @param[in] sensor a sensor to get type.

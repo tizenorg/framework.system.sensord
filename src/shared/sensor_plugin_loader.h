@@ -89,6 +89,8 @@ public:
 	sensor_hal* get_sensor_hal(sensor_type_t type);
 	vector<sensor_hal *> get_sensor_hals(sensor_type_t type);
 
+	std::vector<sensor_type_t> get_sensor_types(void);
+
 	sensor_base* get_sensor(sensor_type_t type);
 	vector<sensor_base *> get_sensors(sensor_type_t type);
 	sensor_base* get_sensor(sensor_id_t id);
