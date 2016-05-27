@@ -359,6 +359,20 @@ vector<sensor_hal *> sensor_plugin_loader::get_sensor_hals(sensor_hal_type_t typ
 	return sensor_hal_list;
 }
 
+vector<sensor_type_t> sensor_plugin_loader::get_sensor_types(void)
+{
+	std::vector<sensor_type_t> sensor_types;
+
+	auto it = m_sensors.begin();
+
+	while (it != m_sensors.end()) {
+		sensor_types.push_back((sensor_type_t)(it->first));
+		it = m_sensors.upper_bound(it->first);
+	}
+
+	return sensor_types;
+}
+
 sensor_base* sensor_plugin_loader::get_sensor(sensor_type_t type)
 {
 	auto it_plugins = m_sensors.find(type);

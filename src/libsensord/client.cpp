@@ -410,34 +410,70 @@ static bool get_sensor_list(void)
 	return true;
 }
 
-API bool sensord_get_sensor_list(sensor_type_t type, sensor_t **list, int *sensor_count)
+API int sensord_get_sensors(sensor_type_t type, sensor_t **list, int *sensor_count)
 {
-	retvm_if (!get_sensor_list(), false, "Fail to get sensor list from server");
+	retvm_if(!get_sensor_list(), -EIO, "Failed to get sensor list from server");
 
 	vector<sensor_info *> sensor_infos = sensor_info_manager::get_instance().get_infos(type);
+	vector<sensor_info *> valid_sensors;
 
-	if (!sensor_infos.empty()) {
-		*list = (sensor_t *) malloc(sizeof(sensor_info *) * sensor_infos.size());
-		retvm_if(!*list, false, "Failed to allocate memory");
+	if (sensor_infos.empty()) {
+		*sensor_count = 0;
+		return -ENODATA;
 	}
 
-	for (unsigned int i = 0; i < sensor_infos.size(); ++i)
-		*(*list + i) = sensor_info_to_sensor(sensor_infos[i]);
+	if (type != ALL_SENSOR) {
+		if (sensor_infos[0]->get_id() == (sensor_id_t)(-EACCES))
+			return -EACCES;
+	}
 
-	*sensor_count = sensor_infos.size();
+	for (unsigned int i = 0; i < sensor_infos.size(); ++i) {
+		if (sensor_infos[0]->get_id() != (sensor_id_t)(-EACCES))
+			valid_sensors.push_back(sensor_infos[i]);
+	}
 
-	return true;
+	*list = (sensor_t *)malloc(sizeof(sensor_info *) * valid_sensors.size());
+	retvm_if(!*list, false, "Failed to allocate memory");
+
+	for (unsigned int i = 0; i < valid_sensors.size(); ++i)
+		*(*list + i) = sensor_info_to_sensor(valid_sensors[i]);
+
+	*sensor_count = valid_sensors.size();
+
+	return OP_SUCCESS;
 }
 
-API sensor_t sensord_get_sensor(sensor_type_t type)
+API int sensord_get_default_sensor(sensor_type_t type, sensor_t *sensor)
 {
-	retvm_if (!get_sensor_list(), NULL, "Fail to get sensor list from server");
+	retvm_if(!get_sensor_list(), -EIO, "Failed to get sensor list from server");
 
 	const sensor_info *info;
 
 	info = sensor_info_manager::get_instance().get_info(type);
+	if (!info) {
+		*sensor = NULL;
+		return -ENODATA;
+	}
 
-	return sensor_info_to_sensor(info);
+	if ((const_cast<sensor_info *>(info))->get_id() == (sensor_id_t)(-EACCES))
+		return -EACCES;
+
+	*sensor = sensor_info_to_sensor(info);
+
+	return OP_SUCCESS;
+}
+
+API bool sensord_get_sensor_list(sensor_type_t type, sensor_t **list, int *sensor_count)
+{
+	return (sensord_get_sensors(type, list, sensor_count) == OP_SUCCESS);
+}
+
+API sensor_t sensord_get_sensor(sensor_type_t type)
+{
+	sensor_t sensor;
+	sensord_get_default_sensor(type, &sensor);
+
+	return sensor;
 }
 
 API bool sensord_get_type(sensor_t sensor, sensor_type_t *type)

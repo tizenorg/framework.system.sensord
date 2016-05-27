@@ -27,7 +27,6 @@
 #include <permission_checker.h>
 
 using std::string;
-using std::vector;
 using std::make_pair;
 
 command_worker::cmd_handler_t command_worker::m_cmd_handlers[];
@@ -45,7 +44,6 @@ command_worker::command_worker(const csocket& socket)
 
 	if (!init) {
 		init_cmd_handlers();
-		make_sensor_raw_data_map();
 
 		init = true;
 	}
@@ -84,30 +82,57 @@ void command_worker::init_cmd_handlers(void)
 	m_cmd_handlers[CMD_SEND_SENSORHUB_DATA]	= &command_worker::cmd_send_sensorhub_data;
 }
 
-void command_worker::get_sensor_list(int permissions, cpacket &sensor_list)
+int command_worker::create_sensor_raw_list(int client_perms, std::vector<raw_data_t *> &raw_list)
 {
-	const int PERMISSION_COUNT = sizeof(permissions) * 8;
-	vector<raw_data_t *> sensor_raw_vec;
 	size_t total_raw_data_size = 0;
+	std::vector<sensor_base *> sensors;
+	std::vector<sensor_type_t> types;
+	sensor_info info;
+	int permission;
 
-	for (int i = 0; i < PERMISSION_COUNT; ++i) {
-		int perm = (permissions & (1 << i));
+	types = sensor_plugin_loader::get_instance().get_sensor_types();
 
-		if (perm) {
-			auto range = m_sensor_raw_data_map.equal_range(perm);
+	for (auto it_type = types.begin(); it_type != types.end(); ++it_type) {
+		sensor_type_t type = *it_type;
+		sensors = sensor_plugin_loader::get_instance().get_sensors(type);
 
-			sensor_raw_data_map::iterator it_raw_data;
+		for (auto it_sensor = sensors.begin(); it_sensor != sensors.end(); ++it_sensor) {
+			(*it_sensor)->get_sensor_info(type, info);
+			permission = (*it_sensor)->get_permission();
+			permission = (client_perms & permission);
 
-			for (it_raw_data = range.first; it_raw_data != range.second; ++it_raw_data) {
-				total_raw_data_size += it_raw_data->second.size();
-				sensor_raw_vec.push_back(&(it_raw_data->second));
+			if (!permission) {
+				info.clear();
+				info.set_id((sensor_id_t)-EACCES);
+				info.set_type(type);
 			}
+
+			raw_data_t *raw_data = new(std::nothrow) raw_data_t();
+			retvm_if(!raw_data, -1, "Failed to allocated memory");
+			info.get_raw_data(*raw_data);
+
+			total_raw_data_size += raw_data->size();
+			raw_list.push_back(raw_data);
+
+			info.clear();
 		}
 	}
 
-	int sensor_cnt;
+	return total_raw_data_size;
+}
 
-	sensor_cnt = sensor_raw_vec.size();
+void command_worker::get_sensor_list(int client_perms, cpacket &sensor_list)
+{
+	size_t total_raw_data_size = 0;
+	std::vector<raw_data_t *> raw_list;
+	int sensor_cnt;
+	int idx = 0;
+
+	total_raw_data_size = create_sensor_raw_list(client_perms, raw_list);
+	if (total_raw_data_size < 0)
+		return;
+
+	sensor_cnt = raw_list.size();
 
 	sensor_list.set_payload_size(sizeof(cmd_get_sensor_list_done_t) + (sizeof(size_t) * sensor_cnt) + total_raw_data_size);
 	sensor_list.set_cmd(CMD_GET_SENSOR_LIST);
@@ -118,50 +143,18 @@ void command_worker::get_sensor_list(int permissions, cpacket &sensor_list)
 	cmd_get_sensor_list_done->sensor_cnt = sensor_cnt;
 	size_t* size_field = (size_t *) cmd_get_sensor_list_done->data;
 
-
 	for (int i = 0; i < sensor_cnt; ++i)
-		size_field[i] = sensor_raw_vec[i]->size();
+		size_field[i] = raw_list[i]->size();
 
 	char* raw_data_field = cmd_get_sensor_list_done->data + (sizeof(size_t) * sensor_cnt);
 
-	int idx = 0;
 	for (int i = 0; i < sensor_cnt; ++i) {
-		copy(sensor_raw_vec[i]->begin(), sensor_raw_vec[i]->end(), raw_data_field + idx);
-		idx += sensor_raw_vec[i]->size();
+		copy(raw_list[i]->begin(), raw_list[i]->end(), raw_data_field + idx);
+		idx += raw_list[i]->size();
 	}
 
-}
-
-void command_worker::make_sensor_raw_data_map(void)
-{
-	vector<sensor_base *> sensors;
-	sensor_info info;
-	int permission;
-
-	sensors = sensor_plugin_loader::get_instance().get_sensors(ALL_SENSOR);
-
-    std::sort(sensors.begin(), sensors.end());
-    auto last = std::unique(sensors.begin(), sensors.end());
-
-	auto it_sensor = sensors.begin();
-
-	while (it_sensor != last) {
-
-		vector<sensor_type_t> types;
-		(*it_sensor)->get_types(types);
-
-		for (unsigned int i = 0; i < types.size(); ++i) {
-			(*it_sensor)->get_sensor_info(types[i], info);
-			permission = (*it_sensor)->get_permission();
-
-			sensor_raw_data_map::iterator it_sensor_raw_data;
-			it_sensor_raw_data = m_sensor_raw_data_map.insert(std::make_pair(permission, raw_data_t()));
-
-			info.get_raw_data(it_sensor_raw_data->second);
-			info.clear();
-		}
-		++it_sensor;
-	}
+	for (auto it = raw_list.begin(); it != raw_list.end(); ++it)
+		delete *it;
 }
 
 bool command_worker::working(void *ctx)
@@ -856,4 +849,3 @@ csensor_event_dispatcher& command_worker::get_event_dispathcher(void)
 {
 	return csensor_event_dispatcher::get_instance();
 }
-

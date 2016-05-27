@@ -24,6 +24,7 @@
 #include <cclient_info_manager.h>
 #include <csensor_event_dispatcher.h>
 #include <sensor_base.h>
+#include <vector>
 #include <map>
 
 typedef std::multimap<int, raw_data_t> sensor_raw_data_map;
@@ -46,7 +47,7 @@ private:
 	static sensor_raw_data_map m_sensor_raw_data_map;
 
 	static void init_cmd_handlers(void);
-	static void make_sensor_raw_data_map(void);
+	static int create_sensor_raw_list(int client_perms, std::vector<raw_data_t *> &raw_list);
 	static void get_sensor_list(int permissions, cpacket &sensor_list);
 
 	static bool working(void *ctx);
